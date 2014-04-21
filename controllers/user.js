@@ -1,72 +1,86 @@
 var util = require(__dirname + '/../helpers/util'),
     logger = require(__dirname + '/../lib/logger'),
     config = require(__dirname + '/../config/config'),
-	passport = require('passport'),
     qs = require('querystring'),
-    http = require('http');
+    http = require('http'),
+	passport;
 
-// configure passport
-require(__dirname + '/../config/passport')(passport);
+exports.setPassport = function (pp) {
+	passport = pp;
+};
 
 exports.register = function (req, res, next) {
-	var data = util.chk_rqd('email', 'lname', 'fname', 'birhtday', req.body, next),
-		relayToAS = function () {
+	var data = util.chk_rqd(['email', 'lname', 'fname', 'birthdate'], req.body, next),
+		relayToAS = function (data) {
 			var payload = qs.stringify(data),
                 req = http.request({
-                    host: config.systemone.host,
-                    port: config.systemone.port,
-                    path: config.systemone.path,
+                    host: config.auth_server.host,
+                    port: config.auth_server.port,
+                    path: '/user/register',
                     method: 'POST',
                     headers : {
                         "Content-Type" : 'application/x-www-form-urlencoded',
                         "Content-Length" : payload.length
                     }
-                }, function(response) {
+                }, function (response) {
 					var s = '';
                     response.setEncoding('utf8');
                     response.on('data', function (chunk) {
-						s+=chunk;
+						s += chunk;
                     });
-
                     response.on('end', function () {
-                        saveInDb(JSON.parse(s));
+                        var data = JSON.parse(s);
+						console.dir(data);
+						switch (response.statusCode) {
+							case 200 : return res.redirect('/login.html');
+							default : return res.redirect('/failure.html#' + data.data);
+						}
                     });
                 });
-            req.on('error', function(err) {
-                logger.log('info', 'student:login systemone not responding', JSON.stringify(err));
-                return res.send(401, {message : 'Wrong username or password'});
+            req.on('error', function (err) {	
+                console.log('Unable to connect to auth server');
+				console.dir(err);
+				return res.redirect('/failure.html#' + err);
             });
             req.write(payload);
             req.end();
-			logger.log('verbose', 'student:login sending request to rodolfo');
         };
+	data.birthdate = +new Date(data.birthdate);
+	data.app_id = config.app_id;
+	if (req.body.google_refresh_token) {
+		data.google_refresh_token = req.body.google_refresh_token;
+		data.password = ' ';
+	}
+	else if (!req.body.password) {
+		return next(new Error('password is missing'));
+	}
+	req.body.street_address && (data.street_address = req.body.street_address);
+	req.body.postal_code && (data.postal_code = req.body.postal_code);
+	req.body.referrer && (data.referrer = req.body.referrer);
+	req.body.country && (data.country = req.body.country);
+	req.body.avatar && (data.avatar = req.body.avatar);
+	req.body.skype && (data.skype = req.body.skype);
+	req.body.state && (data.state = req.body.state);
+	req.body.city && (data.city = req.body.city);
+	console.dir(data);
+	relayToAS(data);
 };
 
 exports.auth_google = function () {
 	return passport.authenticate('google', {
 		scope : ['profile', 'email'],
 		approvalPrompt : 'force',
-		accessType : 'offline',
-		state : 'google'
+		accessType : 'offline'
 	});
 };
 
-exports.auth_youtube = function () {
-	return passport.authenticate('youtube', {
-		approvalPrompt : 'force',
-		accessType : 'offline',
-		scope : [
-			'https://www.googleapis.com/auth/youtube',
-			'email'
-		],
-		state : 'youtube'
-	});
-};
-
-exports.auth_callback = function (req, res, next) {
-	console.log('state', req.query.state);
-	passport.authenticate(req.query.state, {
-		successRedirect : '/profile',
-		failureRedirect : '/'
+exports.auth_google_callback = function (req, res, next) {
+	passport.authenticate('google', function (err, user, info) {
+		switch (info) {
+			case 0 : return res.redirect('/login.html');
+			case 1 : return res.redirect('/birthday.html#' + encodeURIComponent(JSON.stringify(user)));
+			default : return res.redirect('/failure.html#' + err);
+		}
 	})(req, res, next);
 };
+

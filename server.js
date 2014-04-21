@@ -1,5 +1,6 @@
 var fs = require('fs'),
 	express = require('express'),
+	passport = require('passport'),
     app = express(),
 
 	// middlewares
@@ -18,6 +19,8 @@ var fs = require('fs'),
 
 logger.log('info', 'initializing FREEDOM. ENV = ', process.env['NODE_ENV']);
 
+require(__dirname + '/config/passport')(passport);
+
 app.disable('x-powered-by');
 process.env['NODE_ENV'] !== 'testing' &&	// don't log on file if testing
 app.use(morgan({stream : fs.createWriteStream(config.logs_dir + util.currentDate() + '.log', {flags: 'a'})}));
@@ -28,9 +31,10 @@ app.use(bodyParser({uploadDir : config.temp_dir}));
 app.use(compression());
 app.use(methodOverride());
 app.use(express.static(config.public_dir));
+app.use(passport.initialize());
 
 logger.log('verbose', 'setting up router');
-router.setup(app);
+router.setup(app, passport);
 
 app.listen(config.port);
 logger.log('info', 'Server listening on port : ', config.port);

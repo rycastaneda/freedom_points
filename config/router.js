@@ -1,10 +1,12 @@
 var logger = require(__dirname + '/../lib/logger'),
 	user = require(__dirname + '/../controllers/user');
 
-exports.setup = function (app) {
+exports.setup = function (app, passport) {
+	user.setPassport(passport);
+
+    app.post('/register', user.register);
     app.get('/auth/google', user.auth_google());
-    app.get('/auth/youtube', user.auth_youtube());
-    app.get('/auth/callback', user.auth_callback);
+    app.get('/auth/google/callback', user.auth_google_callback);
 
     app.get('*', function (req, res) {
         res.redirect('/index.html');

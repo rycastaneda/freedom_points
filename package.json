@@ -15,8 +15,7 @@
     "static-favicon": "~1.0.2",
     "response-time": "~1.0.0",
     "passport-google-oauth": "~0.1.5",
-    "passport": "~0.2.0",
-    "passport-youtube": "0.0.6"
+    "passport": "~0.2.0"
   },
   "scripts": {
     "start": "nodemon server.js",

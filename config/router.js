@@ -1,7 +1,7 @@
 var logger = require(__dirname + '/../lib/logger'),
 	user = require(__dirname + '/../controllers/user');
 
-exports.setup = function (app, passport) {
+module.exports = function (app, passport) {
 	user.setPassport(passport);
 
     app.post('/register', user.register);

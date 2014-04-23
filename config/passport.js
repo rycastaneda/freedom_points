@@ -1,5 +1,6 @@
 var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy,
-	config = require('./config'),
+    logger = require(__dirname + '/../lib/logger'),
+	config = require(__dirname + '/config'),
     qs = require('querystring'),
     http = require('http');;
 
@@ -13,14 +14,14 @@ module.exports = function (passport) {
 		process.nextTick(function() {
 			var payload,
 				req;
-			
+
 			payload = qs.stringify({
 				email : profile.emails[0].value,
 				app_id : config.app_id,
 				source : 'google',
 				google_access_token : accessToken
 			});
-						
+
 			req = http.request({
                     host: config.auth_server.host,
                     port: config.auth_server.port,
@@ -38,26 +39,31 @@ module.exports = function (passport) {
                     });
                     response.on('end', function () {
 						var data = JSON.parse(s);
+
+						logger.log('info', 'Done sending login request to auth server');
+						logger.log('verbose', response.statusCode, s);
+
 						switch (response.statusCode) {
-							case 200 : return done(null, data, 0);	// login successful
-							case 404 : return done(null, {			// register
+							case 200 : return done(null, data, 0);			// login successful
+							case 404 : return done(null, {					// register
 								email : profile.emails[0].value,
 								google_refresh_token : refreshToken,
 								fname : profile._json.given_name,
 								lname : profile._json.family_name,
 								avatar : profile._json.picture
 							}, 1);
-							default : return done(data.data);	// error
+							default : return done(data.data);				// error
 						}
                     });
                 });
-				
+
             req.on('error', function (err) {
-				console.log('error connecting in auth server');
+				logger.log('error', 'Failed to connect to auth server : ' + err);
                 return done(err);
             });
             req.write(payload);
             req.end();
+			logger.log('info', 'Sending login request to auth server');
 	    });
     }));
 };

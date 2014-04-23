@@ -11,7 +11,7 @@ var fs = require('fs'),
 	bodyParser = require('body-parser'),
 	morgan = require('morgan'),
 
-	// 
+	//
     config = require(__dirname + '/config/config'),
     logger = require(__dirname + '/lib/logger'),
     util = require(__dirname + '/helpers/util');
@@ -29,7 +29,16 @@ app.use(cookieParser(config.cookie_secret));
 app.use(responseTime());
 app.use(compression());
 app.use(methodOverride());
-app.use(passport.initialize());
+app.use(passport.initialize());;
+app.use(function (req, res, next) {
+	res.setHeader('Access-Control-Allow-Origin', config.frontend_server_url);
+	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+	res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept');
+	res.setHeader('Access-Control-Allow-Credentials', true);
+	if (req.method === 'OPTIONS')
+		return res.send(200);
+	next();
+});
 
 require(__dirname + '/config/router')(app, passport);
 

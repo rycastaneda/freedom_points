@@ -4,6 +4,7 @@ var logger = require(__dirname + '/../lib/logger'),
 module.exports = function (app, passport) {
 	user.setPassport(passport);
 
+    app.get('/user', user.info);
     app.post('/register', user.register);
     app.get('/auth/google', user.auth_google());
     app.get('/auth/google/callback', user.auth_google_callback);

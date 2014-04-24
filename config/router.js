@@ -1,23 +1,23 @@
-var logger = require(__dirname + '/../lib/logger'),
-	user = require(__dirname + '/../controllers/user');
+var user = require(__dirname + '/../controllers/user');
 
-module.exports = function (app, passport) {
+module.exports = function (router, logger, passport) {
 	user.setPassport(passport);
 
-    app.get('/user', user.info);
-    app.post('/register', user.register);
-    app.get('/auth/google', user.auth_google());
-    app.get('/auth/google/callback', user.auth_google_callback);
+    router.get('/user', user.info);
+    router.post('/register', user.register);
+    router.get('/auth/google', user.auth_google());
+    router.get('/auth/google/callback', user.auth_google_callback);
 
-    app.get('*', function (req, res) {
-        res.redirect('/index.html');
+    router.all('*', function (req, res) {
+        res.send(404, {
+			message : 'Nothing to do here.'
+		});
     });
 
-    // error handling
-    app.use(function (err, req, res, next) {
+    router.use(function (err, req, res, next) {
         logger.log('warn', err.message);
         return res.send(err.code || 400, {message : err.message});
     });
 
-	logger.log('verbose', 'done setting up router');
+	return router;
 };

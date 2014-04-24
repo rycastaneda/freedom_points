@@ -1,13 +1,11 @@
 var config = require(__dirname + '/../config/config'),
     logger = require(__dirname + '/../lib/logger'),
 	util = require(__dirname + '/../helpers/util'),
-	as_helper = require(__dirname + '/../helpers/auth_server'),
     qs = require('querystring'),
-    http = require('http'),
-	passport;
+    http = require('http');
 
 
-//channel related operations, kelangan ng authentication from google para makapagperform ng edit 
+//channel related operations, kelangan ng authentication from google para makapagperform ng edit
 //nakalagay yung access token na gagamitin for each channel dun sa respective table rows nila
 function editVideo(video_id, next ) {
 

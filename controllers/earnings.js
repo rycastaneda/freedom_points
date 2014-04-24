@@ -1,15 +1,9 @@
 var config = require(__dirname + '/../config/config'),
     logger = require(__dirname + '/../lib/logger'),
 	util = require(__dirname + '/../helpers/util'),
-	as_helper = require(__dirname + '/../helpers/auth_server'),
     qs = require('querystring'),
     http = require('http'),
-	mysql = require('mysql'),
-	passport;
-
-exports.setPassport = function (pp) {
-	passport = pp;
-};
+	mysql = require('mysql');
 
 //get each earnings from the database 'earnings_report'
 //based from each feature from the dashboard, eto yung mga nasa overview tab

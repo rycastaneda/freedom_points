@@ -32,7 +32,6 @@ var path = require('path'),
 				port : 80
 			},
 			cookie_secret : 'c38b1c9ac1c2f9d442f17bb2b77d1a075b617715',
-			session_secret : '91893411c2e8ad225677f1348e83615e27f4b242',
 			app_id : '665f627007666750b092f6a68396ed76',
 			app_secret : '704a857f886341eb7980a899b18a2687',
 			basic_scopes : [

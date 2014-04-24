@@ -7,7 +7,6 @@ var fs = require('fs'),
 	cookieParser = require('cookie-parser'),
 	responseTime = require('response-time'),
 	compression = require('compression'),
-	favicon = require('static-favicon'),
 	bodyParser = require('body-parser'),
 	morgan = require('morgan'),
 
@@ -23,13 +22,12 @@ require(__dirname + '/config/passport')(passport);
 app.disable('x-powered-by');
 process.env['NODE_ENV'] !== 'testing' &&	// don't log on file if testing
 app.use(morgan({stream : fs.createWriteStream(config.logs_dir + util.currentDate() + '.log', {flags: 'a'})}));
-app.use(favicon(config.public_dir + '/favicon.ico'));
 app.use(bodyParser({uploadDir : config.temp_dir}));
 app.use(cookieParser(config.cookie_secret));
 app.use(responseTime());
 app.use(compression());
 app.use(methodOverride());
-app.use(passport.initialize());;
+app.use(passport.initialize());
 app.use(function (req, res, next) {
 	res.setHeader('Access-Control-Allow-Origin', config.frontend_server_url);
 	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

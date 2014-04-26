@@ -1,16 +1,19 @@
 var crypto = require('crypto'),
     fs = require('fs');
 
-exports.chk_rqd = function (reqd, body, next) {
+exports.get_data = function (reqd, optional, body) {
     var i = reqd.length,
         ret = {},
         temp;
     while (i--) {
-        if (!body[temp = reqd[i]] || body[temp] instanceof Array) {
-            next && next(new Error(temp + ' is missing'));
-			return false;
-        }
+        if (!body[temp = reqd[i]] || body[temp] instanceof Array)
+            return new Error(temp + ' is missing');
         ret[temp] = body[temp];
+    }
+	i = optional.length;
+    while (i--) {
+        if (body[temp = optional[i]])
+			ret[temp] = body[temp];
     }
     return ret;
 };
@@ -25,7 +28,7 @@ exports.toDay = function (str) {
 };
 
 exports.hash = function (string, hash) {
-    return crypto.createHash(hash || 'md5').update('' + string).digest('hex');
+    return crypto.createHash(hash || 'sha1').update('' + string).digest('hex');
 };
 
 exports.randomString = function (i) {

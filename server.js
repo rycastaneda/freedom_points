@@ -1,5 +1,4 @@
-var fs = require('fs'),
-	passport = require('passport'),
+var passport = require('passport'),
     express = require('express'),
     app = express(),
 
@@ -25,6 +24,6 @@ app.use(require(__dirname + '/config/router')(express.Router(), logger, passport
 
 app.listen(config.port);
 
-module.exports = app;
-
 logger.log('info', 'Server listening on port : ', config.port);
+
+module.exports = app;

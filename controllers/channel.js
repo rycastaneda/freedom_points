@@ -22,11 +22,6 @@ function editChannelInfo( channel_id, next ) {
 
 };
 
-exports.setPassport = function (pp) {
-	passport = pp;
-};
-
-
 exports.getChannelStats = function(req,res,next) {
 
 

@@ -1,6 +1,7 @@
 var config = require(__dirname + '/../config/config'),
     logger = require(__dirname + '/../lib/logger'),
 	util = require(__dirname + '/../helpers/util'),
+    curl = require(__dirname + '/../lib/curl'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),
     qs = require('querystring'),
     http = require('http'),
@@ -11,65 +12,53 @@ exports.setPassport = function (pp) {
 };
 
 exports.register = function (req, res, next) {
-	var data = util.chk_rqd(['email', 'lname', 'fname', 'birthdate', 'password'], req.body, next),
-		relayToAS = function (data) {
-			var payload = qs.stringify(data),
-                req = http.request({
-                    host: config.auth_server.host,
-                    port: config.auth_server.port,
-                    path: '/user/register',
-                    method: 'POST',
-                    headers : {
-                        'Content-Type' : 'application/x-www-form-urlencoded',
-                        'Content-Length' : payload.length
-                    }
-                }, function (response) {
-					var s = '';
-                    response.setEncoding('utf8');
-                    response.on('data', function (chunk) {
-						s += chunk;
-                    });
-                    response.on('end', function () {
-                        var data = JSON.parse(s);
-						logger.log('info', 'register : done sending request to AS');
-						console.dir(data);
-						console.dir(response.statusCode);
-						if (response.statusCode === 200) {
-							return res.redirect(config.frontend_server_url + '/login.html');
-						}
-						return res.redirect(config.frontend_server_url + '/failure.html#' + (data.data || data.message));
-                    });
-                });
-            req.on('error', function (err) {
-                console.log('Unable to connect to auth server');
-				console.dir(err);
-				return res.redirect(config.frontend_server_url + '/failure.html#' + err);
-            });
-            req.write(payload);
-            req.end();
-			logger.log('info', 'register : sending request to AS');
-        };
+	var data = util.get_data(
+		['email', 'lname', 'fname', 'birthdate', 'password'],
+		['postal_code', 'google_refresh_token', 'street_address', 'referrer', 'country', 'avatar', 'skype', 'state', 'city'],
+		req.body);
 
-	if (!data) return;
+	logger.log('info', 'Someone is trying to register');
 
-	if (isNaN(data.birthdate = +new Date(data.birthdate))) {
+	if (data instanceof Error) return next(data);
+	if (isNaN(data.birthdate = +new Date(data.birthdate)))
 		return next(new Error('Invalid birthday'));
-	}
 
 	data.app_id = config.app_id;
-	req.body.postal_code && !isNaN(req.body.postal_code) && (data.postal_code = req.body.postal_code);
-	req.body.google_refresh_token && (data.google_refresh_token = req.body.google_refresh_token);
-	req.body.street_address && (data.street_address = req.body.street_address);
-	req.body.referrer && (data.referrer = req.body.referrer);
-	req.body.country && (data.country = req.body.country);
-	req.body.avatar && (data.avatar = req.body.avatar);
-	req.body.skype && (data.skype = req.body.skype);
-	req.body.state && (data.state = req.body.state);
-	req.body.city && (data.city = req.body.city);
-
 	logger.log('verbose', data);
 
-	relayToAS(data);
+	curl.post
+		.to(config.auth_server.host, config.auth_server.port, '/user/register')
+		.send(data)
+		.then(function (statusCode, data) {
+			return res.redirect(config.frontend_server_url + (
+				statusCode === 200
+					? '/login.html'
+					: '/failure.html#' + (data.data || data.message)));
+		})
+		.then(function (err) {
+			return res.redirect(config.frontend_server_url + '/failure.html#' + err);
+		});
+};
+
+exports.update = function (req, res, next) {
+	var data = util.get_data(
+		['lname', 'fname'],
+		['postal_code', 'street_address', 'country', 'avatar', 'skype', 'state', 'city', 'facebook', 'twitter', 'phone'],
+		req.body);
+
+	logger.log('info', 'Someone is trying to update profile');
+
+	if (data instanceof Error) return next(data);
+	if (!(data.access_token = req.signedCookies.access_token))
+		return next(new Error('access_token is missing'));
+
+	curl.put
+		.to(config.auth_server.host, config.auth_server.port, '/user')
+		.send(data)
+		.then(function (statusCode, data) {
+			return res.send(data);
+		})
+		.then(next);
 };
 
 exports.auth_google = function () {
@@ -115,7 +104,6 @@ exports.info = function (req, res, next) {
 			if (err) return next(err);
 			res.send(data.user_data);
 		};
-	console.dir(req.signedCookies);
 
 	if (!(data.access_token = req.signedCookies.access_token)) {
 		return next(new Error('access_token is missing'));

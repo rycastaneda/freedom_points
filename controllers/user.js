@@ -30,13 +30,10 @@ exports.register = function (req, res, next) {
 		.to(config.auth_server.host, config.auth_server.port, '/user/register')
 		.send(data)
 		.then(function (statusCode, data) {
-			return res.redirect(config.frontend_server_url + (
-				statusCode === 200
-					? '/login.html'
-					: '/failure.html#' + (data.data || data.message)));
+			res.send(data);
 		})
 		.then(function (err) {
-			return res.redirect(config.frontend_server_url + '/failure.html#' + err);
+			return next(err);
 		});
 };
 
@@ -74,7 +71,7 @@ exports.auth_google_callback = function (req, res, next) {
 		var sendResponse = function (err, data) {
 			if (err) return next(err);
 			res.cookie('access_token', data, { signed : true });
-			return res.redirect(config.frontend_server_url + '/#/overview');
+			return res.redirect(config.frontend_server_url + '/overview');
 		};
 
 		switch (info) {
@@ -87,10 +84,10 @@ exports.auth_google_callback = function (req, res, next) {
 				break;
 			case 1 :
 				res.cookie('data', JSON.stringify(user));
-				return res.redirect(config.frontend_server_url + '/#/registration');
+				return res.redirect(config.frontend_server_url + '/register');
 			default :
 				res.cookie('error', err);
-				return res.redirect(config.frontend_server_url + '/#/error');
+				return res.redirect(config.frontend_server_url + '/error');
 		}
 
 	})(req, res, next);
@@ -110,5 +107,11 @@ exports.info = function (req, res, next) {
 	}
 	data.self = true;
 	as_helper.getInfo(data, sendResponse);
+};
+
+exports.logout = function (req, res, next) {
+	logger.log('info', 'Someone is logging out');
+	res.clearCookie('access_token');
+	res.send(200, {message : 'Logout successful'});
 };
 

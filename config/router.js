@@ -5,6 +5,7 @@ module.exports = function (router, logger, passport) {
 
     router.get('/user', user.info);
     router.put('/user', user.update);
+    router.get('/logout', user.logout);
     router.post('/register', user.register);
     router.get('/auth/google', user.auth_google());
     router.get('/auth/google/callback', user.auth_google_callback);

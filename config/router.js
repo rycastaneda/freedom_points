@@ -18,7 +18,7 @@ module.exports = function (router, logger, passport) {
 
     router.use(function (err, req, res, next) {
         logger.log('warn', err.message);
-        return res.send(err.code || 400, {message : err.message});
+        return res.send(400, {message : err.message});
     });
 
 	return router;

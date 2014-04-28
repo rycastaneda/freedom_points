@@ -11,14 +11,12 @@ module.exports = function (router, logger, passport) {
     router.get('/auth/google/callback', user.auth_google_callback);
 
     router.all('*', function (req, res) {
-        res.send(404, {
-			message : 'Nothing to do here.'
-		});
+        res.send(404, {message : 'Nothing to do here.'});
     });
 
     router.use(function (err, req, res, next) {
-        logger.log('warn', err.message);
-        return res.send(400, {message : err.message});
+        logger.log('error', err.message || err);
+        return res.send(400, {message : err.message || err});
     });
 
 	return router;

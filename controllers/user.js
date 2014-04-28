@@ -12,49 +12,29 @@ exports.setPassport = function (pp) {
 };
 
 exports.register = function (req, res, next) {
-	var data = util.get_data(
-		['email', 'lname', 'fname', 'birthdate', 'password'],
-		['postal_code', 'google_refresh_token', 'street_address', 'referrer', 'country', 'avatar', 'skype', 'state', 'city'],
-		req.body);
+	var data = req.body;
+	data.app_id = config.app_id;
 
 	logger.log('info', 'Someone is trying to register');
-
-	if (data instanceof Error) return next(data);
-	if (isNaN(data.birthdate = +new Date(data.birthdate)))
-		return next(new Error('Invalid birthday'));
-
-	data.app_id = config.app_id;
-	logger.log('verbose', data);
+	res.clearCookie('data');
 
 	curl.post
 		.to(config.auth_server.host, config.auth_server.port, '/user/register')
 		.send(data)
-		.then(function (statusCode, data) {
-			res.send(data);
-		})
-		.then(function (err) {
-			return next(err);
-		});
+		.then(res.send.bind(res))
+		.then(next);
 };
 
 exports.update = function (req, res, next) {
-	var data = util.get_data(
-		['lname', 'fname'],
-		['postal_code', 'street_address', 'country', 'avatar', 'skype', 'state', 'city', 'facebook', 'twitter', 'phone'],
-		req.body);
+	var data = req.body;
+	data.access_token = req.signedCookies.access_token
 
 	logger.log('info', 'Someone is trying to update profile');
-
-	if (data instanceof Error) return next(data);
-	if (!(data.access_token = req.signedCookies.access_token))
-		return next(new Error('access_token is missing'));
 
 	curl.put
 		.to(config.auth_server.host, config.auth_server.port, '/user')
 		.send(data)
-		.then(function (statusCode, data) {
-			return res.send(data);
-		})
+		.then(res.send.bind(res))
 		.then(next);
 };
 
@@ -79,7 +59,7 @@ exports.auth_google_callback = function (req, res, next) {
 				as_helper.getAccessToken({
 					user_id : user.user_data._id,
 					scope_token : user.scope_token,
-					scopes : 'self.view'
+					scopes : 'self.view,self.edit'
 				}, sendResponse);
 				break;
 			case 1 :
@@ -93,8 +73,6 @@ exports.auth_google_callback = function (req, res, next) {
 	})(req, res, next);
 };
 
-
-
 exports.info = function (req, res, next) {
 	var data = {},
 		sendResponse = function (err, data) {
@@ -102,16 +80,21 @@ exports.info = function (req, res, next) {
 			res.send(data.user_data);
 		};
 
-	if (!(data.access_token = req.signedCookies.access_token)) {
-		return next(new Error('access_token is missing'));
-	}
+	if (!(data.access_token = req.signedCookies.access_token))
+		return next('access_token is missing');
+
 	data.self = true;
 	as_helper.getInfo(data, sendResponse);
 };
 
 exports.logout = function (req, res, next) {
 	logger.log('info', 'Someone is logging out');
-	res.clearCookie('access_token');
-	res.send(200, {message : 'Logout successful'});
+	as_helper.logout({
+		access_token : req.signedCookies.access_token,
+		app_id : config.app_id
+	}, function () {
+		res.clearCookie('access_token');
+		res.send({message : 'Logout successful'});
+	});
 };
 

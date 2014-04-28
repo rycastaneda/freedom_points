@@ -7,7 +7,7 @@ exports.get_data = function (reqd, optional, body) {
         temp;
     while (i--) {
         if (!body[temp = reqd[i]] || body[temp] instanceof Array)
-            return new Error(temp + ' is missing');
+            return temp + ' is missing';
         ret[temp] = body[temp];
     }
 	i = optional.length;
@@ -50,7 +50,7 @@ exports.extractFiles = function (files, name, next) {
     if (files[name])
         return (files[name] instanceof Array) ? files[name] : [files[name]];
     if (next) {
-        next(new Error(name + ' is missing'));
+        next(name + ' is missing');
 		return false;
 	}
     return [];

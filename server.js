@@ -1,5 +1,4 @@
-var passport = require('passport'),
-    express = require('express'),
+var express = require('express'),
     app = express(),
 
     config = require(__dirname + '/config/config'),
@@ -7,8 +6,6 @@ var passport = require('passport'),
     util = require(__dirname + '/helpers/util');
 
 logger.log('info', 'initializing FREEDOM Backend. ENV = ', process.env['NODE_ENV']);
-
-require(__dirname + '/config/passport')(passport);
 
 app.disable('x-powered-by');
 app.use(require('morgan')({format : 'dev', immediate : true}));
@@ -18,9 +15,8 @@ app.use(require('cookie-parser')(config.cookie_secret));
 app.use(require('response-time')());
 app.use(require('compression')());
 app.use(require('method-override')());
-app.use(passport.initialize());
 app.use(require(__dirname + '/lib/cors')(config.frontend_server_url));
-app.use(require(__dirname + '/config/router')(express.Router(), logger, passport));
+app.use(require(__dirname + '/config/router')(express.Router(), logger));
 
 app.listen(config.port);
 

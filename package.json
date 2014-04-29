@@ -13,8 +13,9 @@
     "morgan": "~1.0.0",
     "cookie-parser": "~1.0.1",
     "response-time": "~1.0.0",
-    "passport-google-oauth": "~0.1.5",
-    "passport": "~0.2.0"
+    "googleapis": "^0.7.0",
+    "mongoskin": "^1.4.1",
+    "mysql": "^2.2.0"
   },
   "scripts": {
     "start": "nodemon server.js",

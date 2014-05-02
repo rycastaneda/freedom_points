@@ -4,13 +4,13 @@ use freedom;
 
 drop table if exists channel;
 CREATE TABLE channel(
-	_id int(11) auto_increment primary key,
+	_id varchar(64) primary key,
 	network_id int(11),
 	network_name varchar(256) ,
 	partnership_status boolean  default false,
 	channel_name varchar(256)  not null,
-	channel_user_name varchar(512)  not null,
-	access_token blob  not null,
+	channel_username varchar(512)  not null,	/*  from gdata */
+	access_token varchar(128) not null,
 	total_views int(11)  not null,
 	total_comments int(11)  not null,
 	total_subscribers int(11) not null,

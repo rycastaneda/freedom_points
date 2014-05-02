@@ -36,7 +36,7 @@ var path = require('path'),
 				host : 'localhost',
 				user : 'root',
 				password : '',
-				dbname : 'freedom'
+				database : 'freedom'
 			}
 		},
 		staging : {

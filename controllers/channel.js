@@ -1,10 +1,140 @@
 var config = require(__dirname + '/../config/config'),
-    logger = require(__dirname + '/../lib/logger'),
+	mysql = require(__dirname + '/../lib/mysql')(config.db),
 	util = require(__dirname + '/../helpers/util'),
-    qs = require('querystring'),
-    http = require('http');
+    curl = require(__dirname + '/../lib/curl'),
+	googleapis = require('googleapis'),
+    OAuth2 = googleapis.auth.OAuth2;
+
+oauth2Client = new OAuth2(config.googleAuth.clientID, config.googleAuth.clientSecret, config.googleAuth.callbackURL);;
+
+exports.auth_channel = function (req, res, next) {
+	res.redirect(oauth2Client.generateAuthUrl({
+		state : 'channel',
+		access_type: 'offline',
+		approval_prompt : 'force',
+		scope : [
+			'https://www.googleapis.com/auth/youtube',
+			'https://www.googleapis.com/auth/userinfo.profile',
+			'https://www.googleapis.com/auth/yt-analytics.readonly',
+			'https://www.googleapis.com/auth/userinfo.email',
+			'https://www.googleapis.com/auth/yt-analytics-monetary.readonly',
+			'https://www.googleapis.com/auth/youtubepartner',
+			'https://www.googleapis.com/auth/youtube.readonly',
+			'https://www.googleapis.com/auth/youtubepartner-channel-audit'
+		].join(' ')
+	}));
+};
 
 
+exports.auth_youtube_callback = function (req, res, next) {
+	var tokens,
+		redirect = function (err, response) {
+			var data = {},
+				i = response.items.length;
+			if (err) return next(err);
+			data.items = [];
+			while (i--)
+				data.items.push({
+					_id : response.items[i].id,
+					access_token : tokens.access_token,
+					channel_name : response.items[i].brandingSettings.channel.title,
+					total_views : response.items[i].statistics.viewCount,
+					total_videos : response.items[i].statistics.videoCount,
+					total_comments : response.items[i].statistics.commentCount,
+					total_subscribers : response.items[i].statistics.subscriberCount,
+					overall_goodstanding : response.items[i].auditDetails.overallGoodStanding,
+					contentidclaims_goodstanding : response.items[i].auditDetails.contentIdClaimsGoodStanding,
+					copyrightstrikes_goodstanding : response.items[i].auditDetails.copyrightStrikesGoodStanding,
+					communityguidelines_goodstanding : response.items[i].auditDetails.communityGuidelinesGoodStanding
+				});
+			res.cookie('channels', JSON.stringify(data));
+			res.redirect(config.frontend_server_url + '/channels/add');
+		},
+		getClient = function(err, client) {
+			if (err) return next(err);
+			client.youtube.channels.list({
+					part : 'id, snippet, auditDetails, brandingSettings, contentDetails, invideoPromotion, statistics, status, topicDetails',
+					mine : true
+				})
+				.execute(redirect);
+		},
+		getTokens = function(err, _tokens) {
+			if (err) return next(err);
+			tokens = _tokens;
+			oauth2Client.setCredentials(_tokens);
+			googleapis
+				.discover('youtube', 'v3')
+				.withAuthClient(oauth2Client)
+				.execute(getClient);
+		};
+
+	// @override
+	next = function (err) {
+		res.cookie('error', err);
+		res.redirect(config.frontend_server_url + '/error');
+	};
+
+	oauth2Client.getToken(req.query.code, getTokens);
+};
+
+
+exports.add_channel = function (req, res, next) {
+	var data = util.get_data([
+			'_id',
+			'network_id',
+			'channel_name',
+			'access_token',
+			'total_views',
+			'total_comments',
+			'total_subscribers',
+			'total_videos',
+			'overall_goodstanding',
+			'communityguidelines_goodstanding',
+			'copyrightstrikes_goodstanding',
+			'contentidclaims_goodstanding'
+		], [], req.body),
+		get_username = function (status, json) {
+			if (status === 200) {
+				data.channel_username = json.entry['yt$username']['$t'];
+				mysql('INSERT into channel SET ?', data, cb);
+			}
+		},
+		cb = function (err, result) {
+			if (err && err.code === 'ER_DUP_ENTRY')
+				return next('Channel already exist :(');
+			if (err)
+				return next(err);
+			res.send({message : 'Channel was successfully added'});
+		};
+
+	if (typeof data === 'string')
+		return next(data);
+
+	data.last30_days = data.total_videos;
+	data.created_at = +new Date;
+	data.network_name = 'network name'; // should be from db
+
+	curl.get
+		.to('gdata.youtube.com', 80, '/feeds/api/users/' + data._id)
+		.send({alt : 'json'})
+		.then(get_username)
+		.then(next)
+};
+
+
+exports.get_channels = function (req, res, next) {
+	mysql('SELECT * FROM channel',
+	function (err, result) {
+		if (err) return next(err);
+		res.send(result);
+	});
+};
+
+
+
+// mga nilagay ni ninz
+
+/*
 //channel related operations, kelangan ng authentication from google para makapagperform ng edit
 //nakalagay yung access token na gagamitin for each channel dun sa respective table rows nila
 function editVideo(video_id, next ) {
@@ -38,3 +168,4 @@ exports.leaderBoardPerUser = function(req,res,next) {
 
 
 };
+ */

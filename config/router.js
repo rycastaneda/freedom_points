@@ -1,4 +1,5 @@
-var user = require(__dirname + '/../controllers/user');
+var user = require(__dirname + '/../controllers/user'),
+	channel = require(__dirname + '/../controllers/channel');
 
 module.exports = function (router, logger) {
 
@@ -7,8 +8,15 @@ module.exports = function (router, logger) {
 	router.get('/logout', user.logout);
 	router.post('/register', user.register);
 	router.get('/auth/google', user.auth_google);
-	router.get('/channel/add', user.auth_channel);
-	router.get('/auth/callback', user.auth_callback);
+	router.get('/channels', channel.get_channels);
+	router.get('/channel/add', channel.auth_channel);
+	router.post('/channel/add', channel.add_channel);
+	router.get('/auth/callback', function (req, res, next) {
+		if (req.query.state === 'google')
+			user.auth_google_callback(req, res, next);
+		else
+			channel.auth_youtube_callback(req, res, next);
+	});
 
 	router.all('*', function (req, res) {
 		res.send(404, {message : 'Nothing to do here.'});

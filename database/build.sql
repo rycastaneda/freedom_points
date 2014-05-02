@@ -15,7 +15,7 @@ CREATE TABLE channel(
 	total_comments int(11)  not null,
 	total_subscribers int(11) not null,
 	total_videos int(11)  not null default 0,
-	last30_days varchar(256) ,
+	last30_days int(11) ,
 	active boolean default true,
 	overall_goodstanding boolean not null,
 	communityguidelines_goodstanding boolean not null,

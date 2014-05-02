@@ -117,6 +117,7 @@ exports.auth_google_callback = function (req, res, next) {
 				.execute(getClient);
 		};
 
+	// @override
 	next = function (err) {
 		res.cookie('error', err);
 		res.redirect(config.frontend_server_url + '/error');
@@ -152,6 +153,7 @@ exports.auth_youtube_callback = function (req, res, next) {
 				.execute(getClient);
 		};
 
+	// @override
 	next = function (err) {
 		res.cookie('error', err);
 		res.redirect(config.frontend_server_url + '/error');

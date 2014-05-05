@@ -96,12 +96,29 @@ exports.add_channel = function (req, res, next) {
 		get_username = function (status, json) {
 			if (status === 200) {
 				data.channel_username = json.entry['yt$username']['$t'];
-				mysql('INSERT into channel SET ?', data, cb);
+				mysql('INSERT into channel SET ?', data, insert_stat);
 			}
 		},
-		cb = function (err, result) {
+		insert_stat = function (err, result) {
 			if (err && err.code === 'ER_DUP_ENTRY')
 				return next('Channel already exist :(');
+			if (err)
+				return next(err);
+			mysql('INSERT into channel_stats SET ?', {
+				channel_id : data._id,
+				date : +new Date,
+				views : data.total_views,
+				subscribers : data.total_subscribers,
+				videos : data.total_videos,
+				comment : data.total_comments,
+				overall_goodstanding : data.overall_goodstanding,
+				communityguidelines_goodstanding : data.communityguidelines_goodstanding,
+				copyrightstrikes_goodstanding : data.copyrightstrikes_goodstanding,
+				contentidclaims_goodstanding : data.contentidclaims_goodstanding,
+				created_at : +new Date
+			}, send_response);
+		},
+		send_response = function (err, result) {
 			if (err)
 				return next(err);
 			res.send({message : 'Channel was successfully added'});

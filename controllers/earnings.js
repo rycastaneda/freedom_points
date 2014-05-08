@@ -3,7 +3,7 @@ var config = require(__dirname + '/../config/config'),
 	util = require(__dirname + '/../helpers/util'),
     qs = require('querystring'),
     http = require('http'),
-	mysql = require('mysql');
+	mysql = require(__dirname + '/../lib/mysql')(config.db_earnings);
 
 //get each earnings from the database 'earnings_report'
 //based from each feature from the dashboard, eto yung mga nasa overview tab

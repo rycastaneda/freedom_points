@@ -1,5 +1,5 @@
 var config = require(__dirname + '/../config/config'),
-	mysql = require(__dirname + '/../lib/mysql')(config.db),
+	mysql = require(__dirname + '/../lib/mysql')(config.db_freedom),
 	util = require(__dirname + '/../helpers/util'),
     curl = require(__dirname + '/../lib/curl'),
 	googleapis = require('googleapis'),

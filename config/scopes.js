@@ -5,7 +5,7 @@ var scopes = {
 	channel : ['channel.edit', 'channel.add', 'channel.delete', 'channel.view'],
 	music	: ['music.add', 'music.edit', 'music.delete', 'music.view'],
 	staff	: ['recruiter.all'],
-	admin	: ['admin.edit_all', 'admin.create_all', 'admin.delete_all', 'admin.view_all']
+	admin	: ['admin.edit', 'admin.create', 'admin.delete', 'admin.view','user.edit']
 };
 
 module.exports = scopes;

@@ -32,11 +32,17 @@ var path = require('path'),
 				clientSecret 	: 'CRUTm9nhLbv8p8RPY3qkNJky',
 				callbackURL 	: 'http://localhost:8000/auth/callback'
 			},
-			db : {
+			db_freedom : {
 				host : 'localhost',
 				user : 'root',
 				password : '',
 				database : 'freedom'
+			},
+			db_earnings : {
+				host : 'localhost',
+				user : 'root',
+				password : '',
+				database : 'earnings_report'
 			}
 		},
 		staging : {

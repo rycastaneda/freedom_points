@@ -1,21 +1,83 @@
-var curl = require(__dirname + '/../lib/curl'),
-	cluster = require('cluster');
+var cluster = require('cluster'),
+    http = require('http'),
+    https = require('https'),
+	stringify = function (obj) {
+		var ret = [],
+			key;
+		for (key in obj)
+			ret.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
+		return ret.join('&');
+	},
+	Request = function () {
+		this.secure = false;
+		this._raw = false;
+		this.to = function (host, port, path) {
+			this.host = host;
+			this.port = port;
+			this.path = path;
+			return this;
+		};
+		this.secured = function () {
+			this.secure = true;
+			return this;
+		};
+		this.raw = function () {
+			this._raw = true;
+			return this;
+		};
+		this.then = function (cb) {
+			this.scb = cb;
+			return this;
+		};
+		this.onerror = function (cb) {
+			this.ecb = cb;
+			return this;
+		};
+		this.send = function (data) {
+			var self = this,
+				protocol,
+				req;
+
+			this.path += '?' + stringify(data);
+
+			protocol = this.secure ? https : http;
+
+			req = protocol.request({
+				host: this.host,
+				port: this.port,
+				path: this.path,
+				method: 'GET'
+			}, function (response) {
+				var s = '';
+				response.setEncoding('utf8');
+				response.on('data', function (chunk) {
+					s += chunk;
+				});
+				response.on('end', function () {
+					try {
+						JSON.parse(s);
+					} catch (e) {
+						s = JSON.stringify({data : s});
+					}
+					self.scb(response.statusCode, self._raw ? s : JSON.parse(s));
+					self.fcb && self.fcb();
+				});
+			});
+
+			req.on('error', function (err) {
+				self.ecb(err);
+				self.fcb && self.fcb();
+			});
+
+			req.end();
+			return this;
+		};
+	};
 
 if (cluster.isMaster) {
 	var cpuCount = require('os').cpus().length,
-		regions = ['US', 'DZ', 'AR', 'AU', 'AT', 'BH', 'BE', 'BA', 'BR', 'BG', 'CA', 'CL', 'CO', 'HR', 'CZ', 'DK', 'EG', 'EE', 'FI', 'FR', 'DE', 'GH', 'GR', 'HK', 'HU', 'IN', 'ID', 'IE', 'IL', 'IT', 'JP', 'JO', 'KE', 'KW', 'LV', 'LB', 'LT', 'MK', 'MY', 'MX', 'ME', 'MA', 'NL', 'NZ', 'NG', 'NO', 'OM', 'PE', 'PH', 'PL', 'PT', 'QA', 'RO', 'RU', 'SA', 'SN', 'RS', 'SG', 'SK', 'SI', 'ZA', 'KR', 'ES', 'SE', 'CH', 'TW', 'TH', 'TN', 'TR', 'UG', 'UA', 'AE', 'GB', 'YE'],
-		split = function (a, n) {
-			var len = a.length,
-				out = [],
-				i = 0,
-				size;
-			while (i < len) {
-				size = Math.ceil((len - i) / n--);
-				out.push(a.slice(i, i += size));
-			}
-			return out;
-		};
-	curl.get
+		regions = ['US', 'DZ', 'AR', 'AU', 'AT', 'BH', 'BE', 'BA', 'BR', 'BG', 'CA', 'CL', 'CO', 'HR', 'CZ', 'DK', 'EG', 'EE', 'FI', 'FR', 'DE', 'GH', 'GR', 'HK', 'HU', 'IN', 'ID', 'IE', 'IL', 'IT', 'JP', 'JO', 'KE', 'KW', 'LV', 'LB', 'LT', 'MK', 'MY', 'MX', 'ME', 'MA', 'NL', 'NZ', 'NG', 'NO', 'OM', 'PE', 'PH', 'PL', 'PT', 'QA', 'RO', 'RU', 'SA', 'SN', 'RS', 'SG', 'SK', 'SI', 'ZA', 'KR', 'ES', 'SE', 'CH', 'TW', 'TH', 'TN', 'TR', 'UG', 'UA', 'AE', 'GB', 'YE'];
+	new Request()
 		.to('www.youtube.com', 443, '/channels')
 		.raw()
 		.secured()
@@ -33,19 +95,20 @@ if (cluster.isMaster) {
 							return e.substring(7, e.length - 3);
 						}), cpuCount)
 						.forEach(function (a) {
-							return cluster.fork({ channels : a.join(',') });
+							return cluster.fork({
+								channels : a.join(','),
+								url : process.argv[2]
+							});
 						});
 				}
 			}
 		})
-		.onerror(function (e) {
-			console.dir(e);
-		});
+		.onerror(console.dir);
 } else {
 	var io = require('socket.io-client'),
 		KEY = 'AIzaSyDqWOahd3OSYfctw5pTTcNjQjjfD3QC-s4',
 		get_scm = function (a) {
-			return curl.get
+			return new Request()
 				.to('www.youtube.com', 443, '/watch')
 				.raw()
 				.secured()
@@ -84,7 +147,7 @@ if (cluster.isMaster) {
 		},
 
 		get_username = function (a) {
-			return curl.get
+			return new Request()
 				.to('www.googleapis.com', 443, '/youtube/v3/search')
 				.secured()
 				.send({
@@ -104,14 +167,11 @@ if (cluster.isMaster) {
 					}
 					return;
 				})
-				.onerror(function (e) {
-					console.log('Error getting first video and username of channel', a._id);
-				});
+				.onerror(console.dir);
 		},
 
 		get_channel = function (a) {
-			if (+new Date > start + (1000 * 60 * 60)) return process.exit();
-			return curl.get
+			return new Request()
 				.to('www.googleapis.com', 443, '/youtube/v3/channels')
 				.secured()
 				.send({
@@ -136,18 +196,16 @@ if (cluster.isMaster) {
 						console.log(status, 'Error on getting channel', a);
 					return;
 				})
-				.onerror(function (e) {
-					console.log('Error on getting channel', a);
-				});
-		},
-
-		start = +new Date;
+				.onerror(console.dir);
+		};
 	console.log('Releasing black widow', cluster.worker.id);
-	// client = io.connect('http://ec2-54-214-176-172.us-west-2.compute.amazonaws.com:8002/');
-	client = io.connect('http://localhost:8002/');
+	client = io.connect('http://' + process.env['url']);
 	process.env['channels'].split(',').forEach(get_channel);
 }
 
 cluster.on('exit', function (worker) {
 	console.log('Black widow ' + worker.id + ' died :(');
 });
+
+
+

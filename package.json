@@ -15,7 +15,9 @@
     "response-time": "~1.0.0",
     "googleapis": "^0.7.0",
     "mongoskin": "^1.4.1",
-    "mysql": "^2.2.0"
+    "mysql": "^2.2.0",
+    "socket.io": "~0.9.16",
+    "socket.io-client": "^0.9.16"
   },
   "scripts": {
     "start": "nodemon server.js",

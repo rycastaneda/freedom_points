@@ -8,9 +8,13 @@ module.exports = function (router, logger) {
 	router.get('/logout', user.logout);
 	router.post('/register', user.register);
 	router.get('/auth/google', user.auth_google);
+	router.post('/staff', user.staff);
+	router.post('/partner', user.partner);
+
 	router.get('/channels', channel.get_channels);
 	router.get('/channel/add', channel.auth_channel);
 	router.post('/channel/add', channel.add_channel);
+
 	router.get('/auth/callback', function (req, res, next) {
 		if (req.query.state === 'google')
 			user.auth_google_callback(req, res, next);

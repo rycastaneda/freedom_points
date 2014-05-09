@@ -1,11 +1,8 @@
-
-//dito  mo kukunin kung anung scope lalagay mo dun sa choose path..
-var scopes = {
-	all 	: ['self.view, self.edit'],	 	//SCOPES THAT IS COMMON TO ALL USERS
-	channel : ['channel.edit', 'channel.add', 'channel.delete', 'channel.view'],
-	music	: ['music.add', 'music.edit', 'music.delete', 'music.view'],
-	staff	: ['recruiter.all'],
-	admin	: ['admin.edit', 'admin.create', 'admin.delete', 'admin.view','user.edit']
+module.exports = {
+	all 	: 'self.view,self.edit',
+	channel : 'channel.edit,channel.add,channel.delete, channel.view',
+	staff	: 'recruiter.all',
+	music	: 'music.add, music.edit, music.delete, music.view',
+	admin	: 'admin.edit_all, admin.create_all, admin.delete_all, admin.view_all, user.edit',
+	payout	: 'payout.view, payout.allow'
 };
-
-module.exports = scopes;

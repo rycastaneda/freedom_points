@@ -18,7 +18,7 @@ exports.register = function (req, res, next) {
 		.to(config.auth_server.host, config.auth_server.port, '/user/register')
 		.send(data)
 		.then(res.send.bind(res))
-		.then(next);
+		.onerror(next);
 };
 
 exports.update = function (req, res, next) {
@@ -31,7 +31,7 @@ exports.update = function (req, res, next) {
 		.to(config.auth_server.host, config.auth_server.port, '/user')
 		.send(data)
 		.then(res.send.bind(res))
-		.then(next);
+		.onerror(next);
 };
 
 exports.auth_google = function (req, res, next) {
@@ -61,7 +61,7 @@ exports.auth_google_callback = function (req, res, next) {
 					as_helper.getAccessToken({
 						user_id : user.user_data._id,
 						scope_token : user.scope_token,
-						scopes : 'self.view,self.edit'
+						scopes : config.scopes.all
 					}, sendResponse);
 					break;
 				case 1 :
@@ -123,3 +123,41 @@ exports.logout = function (req, res, next) {
 	});
 };
 
+exports.staff = function (req, res, next) {
+	var data = {},
+		addScope = function (err, _data) {
+			if (err) return next(err);
+			as_helper.addScopes({
+				access_token : data.access_token,
+				user_id : _data.user_data._id,
+				scopes : config.scopes.all + ',' + config.scopes.staff
+			}, res.send.bind(res), next);
+		};
+	logger.log('info', 'Someone wants to be a staff');
+
+	if (!(data.access_token = req.signedCookies.access_token))
+		return next('access_token is missing');
+
+	data.self = true;
+	as_helper.getInfo(data, addScope);
+};
+
+
+exports.partner = function (req, res, next) {
+	var data = {},
+		addScope = function (err, _data) {
+			if (err) return next(err);
+			as_helper.addScopes({
+				access_token : data.access_token,
+				user_id : _data.user_data._id,
+				scopes : config.scopes.all + ',' + config.scopes.channel
+			}, res.send.bind(res), next);
+		};
+	logger.log('info', 'Someone wants to be a partner');
+
+	if (!(data.access_token = req.signedCookies.access_token))
+		return next('access_token is missing');
+
+	data.self = true;
+	as_helper.getInfo(data, addScope);
+};

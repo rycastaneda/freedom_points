@@ -1,5 +1,6 @@
 var user = require(__dirname + '/../controllers/user'),
 	channel = require(__dirname + '/../controllers/channel');
+	earnings = require(__dirname + '/../controllers/earnings');
 
 module.exports = function (router, logger) {
 
@@ -14,6 +15,10 @@ module.exports = function (router, logger) {
 	router.get('/channels', channel.get_channels);
 	router.get('/channel/add', channel.auth_channel);
 	router.post('/channel/add', channel.add_channel);
+	
+
+
+	router.get('/earnings/generate_sum', earnings.generateSummedPayouts);
 
 	router.get('/auth/callback', function (req, res, next) {
 		if (req.query.state === 'google')

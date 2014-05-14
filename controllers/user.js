@@ -1,5 +1,5 @@
 var config = require(__dirname + '/../config/config'),
-	mysql = require(__dirname + '/../lib/mysql')(config.db),
+	mysql = require(__dirname + '/../lib/mysql'),
     logger = require(__dirname + '/../lib/logger'),
     curl = require(__dirname + '/../lib/curl'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),

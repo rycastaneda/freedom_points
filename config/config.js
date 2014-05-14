@@ -41,7 +41,7 @@ var path = require('path'),
 			db_earnings : {
 				host : 'localhost',
 				user : 'root',
-				password : 'pepermint',
+				password : '',
 				database : 'earnings_report'
 			}
 		},

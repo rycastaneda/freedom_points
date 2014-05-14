@@ -134,7 +134,7 @@ exports.staff = function (req, res, next) {
 			as_helper.addScopes({
 				access_token : data.access_token,
 				user_id : _data.user_data._id,
-				scopes : config.scopes.all + ',' + config.scopes.staff
+				scopes : config.scopes.all + ',' + config.scopes.staff + ',' + config.scopes.payout
 			}, res.send.bind(res), next);
 		};
 	logger.log('info', 'Someone wants to be a staff');
@@ -154,7 +154,7 @@ exports.partner = function (req, res, next) {
 			as_helper.addScopes({
 				access_token : data.access_token,
 				user_id : _data.user_data._id,
-				scopes : config.scopes.all + ',' + config.scopes.channel
+				scopes : config.scopes.all + ',' + config.scopes.channel + ',' + config.scopes.payout
 			}, res.send.bind(res), next);
 		};
 	logger.log('info', 'Someone wants to be a partner');

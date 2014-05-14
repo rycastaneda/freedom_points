@@ -6,7 +6,7 @@ var app = require('http').createServer(handler),
 	collection = db.collection('channels');
 
 io.set('browser client minification', true);
-io.set('browser client gzip', true);
+// io.set('browser client gzip', true);
 io.set('log level', 0);
 
 app.listen(8002);
@@ -37,5 +37,8 @@ io.sockets.on('connection', function (socket) {
 			console.log('Inserted ' + data.username);
 			emitCount();
 		});
+	});
+	socket.on('error', function (err) {
+		console.dir(err);
 	});
 });

@@ -1,6 +1,8 @@
 var config = require(__dirname + '/../config/config'),
 	mysql = require(__dirname + '/../lib/mysql'),
+	mongo = require(__dirname + '/../lib/mongoskin'),
 	util = require(__dirname + '/../helpers/util'),
+	as_helper = require(__dirname + '/../helpers/auth_server'),
     curl = require(__dirname + '/../lib/curl'),
 	googleapis = require('googleapis'),
     OAuth2 = googleapis.auth.OAuth2;
@@ -95,7 +97,37 @@ exports.add_channel = function (req, res, next) {
 			'copyrightstrikes_goodstanding',
 			'contentidclaims_goodstanding'
 		], [], req.body),
-		get_username = function (status, json) {
+		insert_mongo = function () {
+			var partnership = {
+				type : 'channel',
+				channel : data._id,
+				approver : {
+					admin : {
+						user_id : 1,	//dummy
+						status : false,
+						comments : ''
+					},
+					approver2 : {
+						user_id : data.network_id,	//dummy
+						status : false,
+						comments : ''
+					}
+				},
+				created_at : +new Date,
+				updated_at : +new Date
+			};
+			mongo.collection('partnership')
+				.insert(partnership, get_username)
+		},
+		get_username = function (err) {
+			if (err) return next(err);
+			curl.get
+				.to('gdata.youtube.com', 80, '/feeds/api/users/' + data._id)
+				.send({alt : 'json'})
+				.then(insert_channel)
+				.then(next)
+		},
+		insert_channel = function (status, json) {
 			if (status === 200) {
 				data.channel_username = json.entry['yt$username']['$t'];
 				mysql.open(config.db_freedom)
@@ -137,11 +169,8 @@ exports.add_channel = function (req, res, next) {
 	data.created_at = +new Date;
 	data.network_name = 'network name'; // should be from db
 
-	curl.get
-		.to('gdata.youtube.com', 80, '/feeds/api/users/' + data._id)
-		.send({alt : 'json'})
-		.then(get_username)
-		.then(next)
+	//check scope here
+	as_helper.hasScopes(req.signedCookies.access_token, 'channel.add', insert_mongo, next);
 };
 
 
@@ -159,6 +188,21 @@ exports.get_channels = function (req, res, next) {
 		.end();
 };
 
+
+exports.search = function (req, res, next) {
+	curl.get
+		.to('www.googleapis.com', 443, '/youtube/v3/channels')
+		.secured()
+		.send({
+			part : 'id, snippet, statistics',
+			forUsername : req.query.id,
+			maxResults : 1,
+			fields : 'items(id, snippet/title, snippet/publishedAt, statistics/viewCount, statistics/subscriberCount)',
+			key : config.google_api_key
+		})
+		.then(res.send.bind(res))
+		.onerror(next);
+};
 
 
 // mga nilagay ni ninz

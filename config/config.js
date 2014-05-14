@@ -13,6 +13,7 @@ var path = require('path'),
 				host : 'ec2-54-214-176-172.us-west-2.compute.amazonaws.com',
 				port : 80
 			},
+			google_api_key : 'AIzaSyDqWOahd3OSYfctw5pTTcNjQjjfD3QC-s4',
 			cookie_secret : 'c38b1c9ac1c2f9d442f17bb2b77d1a075b617715',
 			app_id : '665f627007666750b092f6a68396ed76',
 			app_secret : '704a857f886341eb7980a899b18a2687',
@@ -43,6 +44,11 @@ var path = require('path'),
 				user : 'root',
 				password : 'pepermint',
 				database : 'earnings_report'
+			},
+			db_mongo : {
+				host : 'localhost',
+				port : 27017,
+				name : 'freedom'
 			}
 		},
 		staging : {

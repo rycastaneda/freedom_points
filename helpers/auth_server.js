@@ -21,8 +21,8 @@ exports.login = function (profile, access_token, refresh_token, done) {
 			case 404 : return done(null, {					// register
 				email : profile.email || profile.emails[0],
 				google_refresh_token : refresh_token,
-				fname : profile.given_name,
-				lname : profile.family_name,
+				fname : profile.given_name || '',
+				lname : profile.family_name || '',
 				avatar : profile.picture
 			}, 1);
 		}

@@ -1,5 +1,5 @@
 var config = require(__dirname + '/../config/config'),
-	mysql = require(__dirname + '/../lib/mysql')(config.db),
+	mysql = require(__dirname + '/../lib/mysql'),
     logger = require(__dirname + '/../lib/logger'),
     curl = require(__dirname + '/../lib/curl'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),
@@ -66,6 +66,9 @@ exports.auth_google_callback = function (req, res, next) {
 					}, sendResponse);
 					break;
 				case 1 :
+					console.log(user.email);
+					if (~user.email.indexOf('@pages.plusgoogle.com'))
+						user.email = '';
 					res.cookie('data', JSON.stringify(user));
 					res.redirect(config.frontend_server_url + '/register');
 			}

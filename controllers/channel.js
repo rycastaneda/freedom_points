@@ -1,5 +1,5 @@
 var config = require(__dirname + '/../config/config'),
-	mysql = require(__dirname + '/../lib/mysql')(config.db_freedom),
+	mysql = require(__dirname + '/../lib/mysql'),
 	util = require(__dirname + '/../helpers/util'),
     curl = require(__dirname + '/../lib/curl'),
 	googleapis = require('googleapis'),
@@ -98,7 +98,9 @@ exports.add_channel = function (req, res, next) {
 		get_username = function (status, json) {
 			if (status === 200) {
 				data.channel_username = json.entry['yt$username']['$t'];
-				mysql('INSERT into channel SET ?', data, insert_stat);
+				mysql.open(config.db_freedom)
+					.query('INSERT into channel SET ?', data, insert_stat)
+					.end();
 			}
 		},
 		insert_stat = function (err, result) {
@@ -106,19 +108,21 @@ exports.add_channel = function (req, res, next) {
 				return next('Channel already exist :(');
 			if (err)
 				return next(err);
-			mysql('INSERT into channel_stats SET ?', {
-				channel_id : data._id,
-				date : +new Date,
-				views : data.total_views,
-				subscribers : data.total_subscribers,
-				videos : data.total_videos,
-				comment : data.total_comments,
-				overall_goodstanding : data.overall_goodstanding,
-				communityguidelines_goodstanding : data.communityguidelines_goodstanding,
-				copyrightstrikes_goodstanding : data.copyrightstrikes_goodstanding,
-				contentidclaims_goodstanding : data.contentidclaims_goodstanding,
-				created_at : +new Date
-			}, send_response);
+			mysql.open(config.db_freedom)
+				.query('INSERT into channel_stats SET ?', {
+					channel_id : data._id,
+					date : +new Date,
+					views : data.total_views,
+					subscribers : data.total_subscribers,
+					videos : data.total_videos,
+					comment : data.total_comments,
+					overall_goodstanding : data.overall_goodstanding,
+					communityguidelines_goodstanding : data.communityguidelines_goodstanding,
+					copyrightstrikes_goodstanding : data.copyrightstrikes_goodstanding,
+					contentidclaims_goodstanding : data.contentidclaims_goodstanding,
+					created_at : +new Date
+				}, send_response)
+				.end();
 		},
 		send_response = function (err, result) {
 			if (err)
@@ -145,11 +149,14 @@ exports.get_channels = function (req, res, next) {
 
 	//mag curl ka muna sa AS kung may scope na channels.view yung user, tapos dapat mavview nya yung mga owned at manage channels nya
 
-	mysql('SELECT * FROM channel',
-	function (err, result) {
+	var send_response = function (err, result) {
 		if (err) return next(err);
 		res.send(result);
-	});
+	};
+
+	mysql.open(config.db_freedom)
+		.query('SELECT * FROM channel', send_response)
+		.end();
 };
 
 

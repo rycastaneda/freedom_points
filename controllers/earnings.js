@@ -3,7 +3,7 @@ var config = require(__dirname + '/../config/config'),
 	util = require(__dirname + '/../helpers/util'),
     qs = require('querystring'),
     http = require('http'),
-	mysql = require(__dirname + '/../lib/mysql')(config.db_earnings);
+	mysql = require(__dirname + '/../lib/mysql');
 
 //get each earnings from the database 'earnings_report'
 //based from each feature from the dashboard, eto yung mga nasa overview tab
@@ -47,7 +47,8 @@ exports.generateSummedPayouts = function(req,res,next) {
 
 		get_earnings = function (report_id) {
 			console.log('Processing . . . . .');
-			mysql('select sum(total_earnings) as total, channel, user_channel_id from revenue_vid where report_id = ? group by user_channel_id order by total asc;',[report_id],
+			mysql.open(config.db_earnings)
+				.query('select sum(total_earnings) as total, channel, user_channel_id from revenue_vid where report_id = ? group by user_channel_id order by total asc;',[report_id],
 			function (err, result) {
 				if (err) return next(err);
 				for(var i in result) {
@@ -65,7 +66,7 @@ exports.generateSummedPayouts = function(req,res,next) {
 					});
 					mysql.end();
 				}
-			});
+			}).end();
 		};
 
 	if(typeof data === 'string')

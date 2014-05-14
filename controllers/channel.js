@@ -97,29 +97,7 @@ exports.add_channel = function (req, res, next) {
 			'copyrightstrikes_goodstanding',
 			'contentidclaims_goodstanding'
 		], [], req.body),
-		insert_mongo = function () {
-			var partnership = {
-				type : 'channel',
-				channel : data._id,
-				approver : {
-					admin : {
-						user_id : 1,	//dummy
-						status : false,
-						comments : ''
-					},
-					approver2 : {
-						user_id : data.network_id,	//dummy
-						status : false,
-						comments : ''
-					}
-				},
-				created_at : +new Date,
-				updated_at : +new Date
-			};
-			mongo.collection('partnership')
-				.insert(partnership, get_username)
-		},
-		get_username = function (err) {
+		get_username = function () {
 			if (err) return next(err);
 			curl.get
 				.to('gdata.youtube.com', 80, '/feeds/api/users/' + data._id)
@@ -156,9 +134,30 @@ exports.add_channel = function (req, res, next) {
 				}, send_response)
 				.end();
 		},
+		insert_mongo = function (err, result) {
+			if (err) return next(err);
+			mongo.collection('partnership')
+				.insert({
+					type : 'channel',
+					channel : data._id,
+					approver : {
+						admin : {
+							user_id : 1,	//dummy
+							status : false,
+							comments : ''
+						},
+						approver2 : {
+							user_id : data.network_id,	//dummy
+							status : false,
+							comments : ''
+						}
+					},
+					created_at : +new Date,
+					updated_at : +new Date
+				}, send_response);
+		},
 		send_response = function (err, result) {
-			if (err)
-				return next(err);
+			if (err) return next(err);
 			res.send({message : 'Channel was successfully added'});
 		};
 
@@ -170,7 +169,7 @@ exports.add_channel = function (req, res, next) {
 	data.network_name = 'network name'; // should be from db
 
 	//check scope here
-	as_helper.hasScopes(req.signedCookies.access_token, 'channel.add', insert_mongo, next);
+	as_helper.hasScopes(req.signedCookies.access_token, 'channel.add', get_username, next);
 };
 
 
@@ -195,7 +194,7 @@ exports.search = function (req, res, next) {
 		.secured()
 		.send({
 			part : 'id, snippet, statistics',
-			forUsername : req.query.id,
+			forUsername : req.query.key || req.params.key,
 			maxResults : 1,
 			fields : 'items(id, snippet/title, snippet/publishedAt, statistics/viewCount, statistics/subscriberCount)',
 			key : config.google_api_key

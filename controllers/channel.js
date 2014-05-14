@@ -79,6 +79,8 @@ exports.auth_youtube_callback = function (req, res, next) {
 
 
 exports.add_channel = function (req, res, next) {
+
+	//curl ka ng self.edit at channels.add na scope for the user
 	var data = util.get_data([
 			'_id',
 			'network_id',
@@ -140,6 +142,9 @@ exports.add_channel = function (req, res, next) {
 
 
 exports.get_channels = function (req, res, next) {
+
+	//mag curl ka muna sa AS kung may scope na channels.view yung user, tapos dapat mavview nya yung mga owned at manage channels nya
+
 	mysql('SELECT * FROM channel',
 	function (err, result) {
 		if (err) return next(err);

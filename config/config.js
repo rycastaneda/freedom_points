@@ -35,13 +35,13 @@ var path = require('path'),
 			db_freedom : {
 				host : 'localhost',
 				user : 'root',
-				password : '',
-				database : 'freedom'
+				password : 'pepermint',
+				database : 'ytfreedom'
 			},
 			db_earnings : {
 				host : 'localhost',
 				user : 'root',
-				password : '',
+				password : 'pepermint',
 				database : 'earnings_report'
 			}
 		},

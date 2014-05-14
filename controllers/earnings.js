@@ -32,8 +32,7 @@ exports.getPaymentSchedule = function(req,res,next) {
 };
 
 exports.getRangeOfPayments = function(req,res,next) {
-	var data = util.chk_rqd(['user_id'], req.body, next);
-
+	
 
 };
 
@@ -48,24 +47,27 @@ exports.generateSummedPayouts = function(req,res,next) {
 		get_earnings = function (report_id) {
 			console.log('Processing . . . . .');
 			mysql.open(config.db_earnings)
+				.query('delete from summed_earnings where report_id = ?',[report_id])
 				.query('select sum(total_earnings) as total, channel, user_channel_id from revenue_vid where report_id = ? group by user_channel_id order by total asc;',[report_id],
 			function (err, result) {
 				if (err) return next(err);
+				mysql.open(config.db_earnings);
 				for(var i in result) {
 					var rs = {
 						report_id : report_id,
 						channel_id : result[i].user_channel_id,
 						earnings : result[i].total
 					}
-					mysql.open().query('INSERT into summed_earnings SET ?',rs, function(err,rs){
+					mysql.query('INSERT into summed_earnings SET ?',rs, function(err,rs){
 						if(err) {
 							logger.log('error', err.message || err);
 							return;
 						}
 						console.log(rs);
 					});
-					mysql.end();
 				}
+				res.send({message:"Finished processing summed earnings for report_id:" + report_id});
+				mysql.end();
 			}).end();
 		};
 

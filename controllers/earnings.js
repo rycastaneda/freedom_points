@@ -36,3 +36,41 @@ exports.getRangeOfPayments = function(req,res,next) {
 
 
 };
+
+
+exports.generateSummedPayouts = function(req,res,next) {
+	//check if we have admin scopes
+	var data = util.get_data([
+			'report_id',
+			'access_token'
+		], [], req.query),
+
+		get_earnings = function (report_id) {
+			console.log('Processing . . . . .');
+			mysql('select sum(total_earnings) as total, channel, user_channel_id from revenue_vid where report_id = ? group by user_channel_id order by total asc;',[report_id],
+			function (err, result) {
+				if (err) return next(err);
+				for(var i in result) {
+					var rs = {
+						report_id : report_id,
+						channel_id : result[i].user_channel_id,
+						earnings : result[i].total
+					}
+					mysql('INSERT into summed_earnings SET ?',rs, function(err,rs){
+						if(err) {
+							logger.log('error', err.message || err);
+							return;
+						}
+						console.log(rs);
+					});
+
+				}
+			});
+		};
+
+	if(typeof data === 'string')
+		return next(data);
+
+	get_earnings(data.report_id);
+
+};

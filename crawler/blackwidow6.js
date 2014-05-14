@@ -144,7 +144,7 @@ if (cluster.isMaster) {
 		start = +new Date;
 	console.log('Releasing black widow', cluster.worker.id);
 	// client = io.connect('http://ec2-54-214-176-172.us-west-2.compute.amazonaws.com:8002/');
-	client = io.connect('http://10.0.1.182:8002/');
+	client = io.connect('http://192.168.2.104:8002/');
 	process.env['channels'].split(',').forEach(get_channel);
 }
 

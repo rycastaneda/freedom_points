@@ -14,7 +14,8 @@ module.exports = function (router, logger) {
 	router.post('/staff', user.staff);
 	router.post('/partner', user.partner);
 
-
+	// channel related routes
+	router.get('/channel/search', channel.search);
 	router.get('/channels', channel.get_channels);
 	router.get('/channel/add', channel.auth_channel);
 	router.post('/channel/add', channel.add_channel);

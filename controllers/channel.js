@@ -189,6 +189,21 @@ exports.get_channels = function (req, res, next) {
 };
 
 
+exports.search = function (req, res, next) {
+	curl.get
+		.to('www.googleapis.com', 443, '/youtube/v3/channels')
+		.secured()
+		.send({
+			part : 'id, snippet, statistics',
+			forUsername : req.query.id,
+			maxResults : 1,
+			fields : 'items(id, snippet/title, snippet/publishedAt, statistics/viewCount, statistics/subscriberCount)',
+			key : config.google_api_key
+		})
+		.then(res.send.bind(res))
+		.onerror(next);
+};
+
 
 // mga nilagay ni ninz
 

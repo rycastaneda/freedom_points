@@ -43,6 +43,11 @@ var path = require('path'),
 				user : 'root',
 				password : '',
 				database : 'earnings_report'
+			},
+			db_mongo : {
+				host : 'localhost',
+				port : 27017,
+				name : 'freedom'
 			}
 		},
 		staging : {

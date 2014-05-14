@@ -80,3 +80,11 @@ exports.logout = function (data, cb) {
 exports.addScopes = function (data, scb, ecb) {
 	curlToAS('PUT', '/auth/add_self_scopes', data, scb, ecb);
 };
+
+
+exports.hasScopes = function (access_token, scopes, scb, ecb) {
+	curlToAS('GET', '/auth/has_scopes', {
+		access_token : access_token,
+		scopes : scopes
+	}, scb, ecb);
+};

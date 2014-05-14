@@ -56,14 +56,14 @@ exports.generateSummedPayouts = function(req,res,next) {
 						channel_id : result[i].user_channel_id,
 						earnings : result[i].total
 					}
-					mysql('INSERT into summed_earnings SET ?',rs, function(err,rs){
+					mysql.open().query('INSERT into summed_earnings SET ?',rs, function(err,rs){
 						if(err) {
 							logger.log('error', err.message || err);
 							return;
 						}
 						console.log(rs);
 					});
-
+					mysql.end();
 				}
 			});
 		};

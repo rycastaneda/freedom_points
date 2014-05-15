@@ -32,7 +32,18 @@ exports.getPaymentSchedule = function(req,res,next) {
 };
 
 exports.getRangeOfPayments = function(req,res,next) {
-	
+	var data = util.get_data([
+			'user_id',
+			'access_token'
+		], [], req.query)
+
+		get_range = function(user_date);
+
+
+	if(typeof data === 'string')
+		return next(data);
+
+	as_helper.getInfo({self:true}, get_range);
 
 };
 

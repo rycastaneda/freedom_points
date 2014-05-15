@@ -21,7 +21,8 @@ module.exports = function (router, logger) {
 	router.post('/channel/add', channel.add_channel);
 
 
-
+	//earnings related routes
+	router.get('/earnings/date_range', earnings.getRangeOfPayments);
 	router.get('/earnings/generate_sum', earnings.generateSummedPayouts);
 
 	router.get('/auth/callback', function (req, res, next) {

@@ -41,3 +41,26 @@ CREATE TABLE  channel_stats (
 	created_at int(11) not null
 );
 
+
+drop table if exists `prospects`;
+CREATE TABLE `prospects` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `recruiter_id` int(10) unsigned NOT NULL,
+  `recruiter` varchar(255) NOT NULL,
+  `status` varchar(255) NOT NULL,
+  `thumbnail` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `owner` varchar(255) NOT NULL,
+  `link` varchar(255) NOT NULL,
+  `location` varchar(255) NOT NULL,
+  `published` varchar(255) NOT NULL,
+  `subs` varchar(255) NOT NULL,
+  `views` varchar(255) NOT NULL,
+  `rate` varchar(255) NOT NULL,
+  `daterecruited` datetime NOT NULL,
+  `note` varchar(500) NOT NULL,
+  `notedate` datetime NOT NULL,
+  `messaging_link` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
+);
+

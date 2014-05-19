@@ -69,7 +69,6 @@ exports.auth_google_callback = function (req, res, next) {
 					}, sendResponse);
 					break;
 				case 1 :
-					console.log(user.email);
 					if (~user.email.indexOf('@pages.plusgoogle.com'))
 						user.email = '';
 					res.cookie('data', JSON.stringify(user));

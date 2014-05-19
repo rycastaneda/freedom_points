@@ -142,7 +142,7 @@ exports.add_channel = function (req, res, next) {
 					copyrightstrikes_goodstanding : data.copyrightstrikes_goodstanding=='true'?1:0,
 					contentidclaims_goodstanding : data.contentidclaims_goodstanding=='true'?1:0,
 					created_at : +new Date
-				}, send_response)
+				}, insert_mongo)
 				.end();
 		},
 		insert_mongo = function (err, result) {

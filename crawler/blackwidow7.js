@@ -76,7 +76,20 @@ var cluster = require('cluster'),
 
 if (cluster.isMaster) {
 	var cpuCount = require('os').cpus().length,
-		regions = ['US', 'DZ', 'AR', 'AU', 'AT', 'BH', 'BE', 'BA', 'BR', 'BG', 'CA', 'CL', 'CO', 'HR', 'CZ', 'DK', 'EG', 'EE', 'FI', 'FR', 'DE', 'GH', 'GR', 'HK', 'HU', 'IN', 'ID', 'IE', 'IL', 'IT', 'JP', 'JO', 'KE', 'KW', 'LV', 'LB', 'LT', 'MK', 'MY', 'MX', 'ME', 'MA', 'NL', 'NZ', 'NG', 'NO', 'OM', 'PE', 'PH', 'PL', 'PT', 'QA', 'RO', 'RU', 'SA', 'SN', 'RS', 'SG', 'SK', 'SI', 'ZA', 'KR', 'ES', 'SE', 'CH', 'TW', 'TH', 'TN', 'TR', 'UG', 'UA', 'AE', 'GB', 'YE'];
+		regions = ['US', 'DZ', 'AR', 'AU', 'AT', 'BH', 'BE', 'BA', 'BR', 'BG', 'CA', 'CL', 'CO', 'HR', 'CZ', 'DK', 'EG', 'EE', 'FI', 'FR', 'DE', 'GH', 'GR', 'HK', 'HU', 'IN', 'ID', 'IE', 'IL', 'IT', 'JP', 'JO', 'KE', 'KW', 'LV', 'LB', 'LT', 'MK', 'MY', 'MX', 'ME', 'MA', 'NL', 'NZ', 'NG', 'NO', 'OM', 'PE', 'PH', 'PL', 'PT', 'QA', 'RO', 'RU', 'SA', 'SN', 'RS', 'SG', 'SK', 'SI', 'ZA', 'KR', 'ES', 'SE', 'CH', 'TW', 'TH', 'TN', 'TR', 'UG', 'UA', 'AE', 'GB', 'YE'],
+		split = function (a, n) {
+			var len = a.length,
+				out = [],
+				i = 0,
+				size;
+			while (i < len) {
+				size = Math.ceil((len - i) / n--);
+				out.push(a.slice(i, i += size));
+			}
+			return out;
+		};
+	if (!process.argv[2])
+		return console.log('Server IP is missing');
 	new Request()
 		.to('www.youtube.com', 443, '/channels')
 		.raw()
@@ -128,7 +141,9 @@ if (cluster.isMaster) {
 									return s.indexOf(e) === p;
 								})
 								.forEach(function (e) {
-									return get_channel(e.substring(7, e.length - 3));
+									return setTimeout(function (e) {
+										return get_channel(e.substring(7, e.length - 3));
+									}, 1000, e);
 								});
 						}
 					}

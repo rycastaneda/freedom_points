@@ -37,6 +37,9 @@ module.exports = function (router, logger) {
 	});
 
 	router.use(function (err, req, res, next) {
+		console.log('---error---');
+		console.log(err);
+
 		logger.log('error', err.message || err);
 		return res.send(400, {message : err.message || err});
 	});

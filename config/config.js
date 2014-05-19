@@ -37,7 +37,7 @@ var path = require('path'),
 				host : 'localhost',
 				user : 'root',
 				password : 'pepermint',
-				database : 'ytfreedom'
+				database : 'freedom'
 			},
 			db_earnings : {
 				host : 'localhost',

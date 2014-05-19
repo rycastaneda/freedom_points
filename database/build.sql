@@ -5,7 +5,7 @@ use freedom;
 drop table if exists channel;
 CREATE TABLE channel(
 	_id varchar(64) primary key,
-	network_id int(11),
+	network_id varchar(64),
 	network_name varchar(256) ,
 	partnership_status boolean  default false,
 	channel_name varchar(256)  not null,
@@ -22,14 +22,14 @@ CREATE TABLE channel(
 	copyrightstrikes_goodstanding boolean not null,
 	contentidclaims_goodstanding boolean not null,
 	date_approved int(11) default null,
-	created_at int(11)  not null,
-	updated_at int(11)
+	created_at bigint(15)  not null,
+	updated_at bigint(15)
 );
 
 drop table if exists channel_stats;
 CREATE TABLE  channel_stats (
-	channel_id int(11) not null,
-	date int(11)   not null,
+	channel_id varchar(64) not null,
+	date bigint(15)   not null,
 	views int(11)  not null,
 	subscribers int(11)  not null,
 	videos int(11)  not null,
@@ -38,7 +38,7 @@ CREATE TABLE  channel_stats (
 	communityguidelines_goodstanding boolean not null,
 	copyrightstrikes_goodstanding boolean not null,
 	contentidclaims_goodstanding boolean not null,
-	created_at int(11) not null
+	created_at bigint(15) not null
 );
 
 

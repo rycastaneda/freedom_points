@@ -37,7 +37,9 @@ exports.getRangeOfPayments = function(req,res,next) {
 			'access_token'
 		], [], req.query)
 
-		get_range = function(user_date);
+		get_range = function(user_date) {
+
+		};
 
 
 	if(typeof data === 'string')

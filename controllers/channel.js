@@ -98,7 +98,9 @@ exports.add_channel = function (req, res, next) {
 			'contentidclaims_goodstanding'
 		], [], req.body),
 		get_username = function () {
-			if (err) return next(err);
+			// console.log(data._id);
+			// if (err) return next(err);
+			console.log('g_username');
 			curl.get
 				.to('gdata.youtube.com', 80, '/feeds/api/users/' + data._id)
 				.send({alt : 'json'})
@@ -106,8 +108,16 @@ exports.add_channel = function (req, res, next) {
 				.then(next)
 		},
 		insert_channel = function (status, json) {
+			console.log('g_insert');
 			if (status === 200) {
 				data.channel_username = json.entry['yt$username']['$t'];
+				data.overall_goodstanding = data.overall_goodstanding=='true'?1:0;
+				data.copyrightstrikes_goodstanding = data.copyrightstrikes_goodstanding=='true'?1:0;
+				data.contentidclaims_goodstanding = data.contentidclaims_goodstanding=='true'?1:0;
+				data.communityguidelines_goodstanding = data.communityguidelines_goodstanding=='true'?1:0;
+				data.created_at = +new Date;
+
+				console.log(data);
 				mysql.open(config.db_freedom)
 					.query('INSERT into channel SET ?', data, insert_stat)
 					.end();
@@ -118,6 +128,7 @@ exports.add_channel = function (req, res, next) {
 				return next('Channel already exist :(');
 			if (err)
 				return next(err);
+			console.log(data);
 			mysql.open(config.db_freedom)
 				.query('INSERT into channel_stats SET ?', {
 					channel_id : data._id,
@@ -126,10 +137,10 @@ exports.add_channel = function (req, res, next) {
 					subscribers : data.total_subscribers,
 					videos : data.total_videos,
 					comment : data.total_comments,
-					overall_goodstanding : data.overall_goodstanding,
-					communityguidelines_goodstanding : data.communityguidelines_goodstanding,
-					copyrightstrikes_goodstanding : data.copyrightstrikes_goodstanding,
-					contentidclaims_goodstanding : data.contentidclaims_goodstanding,
+					overall_goodstanding : data.overall_goodstanding=='true'?1:0,
+					communityguidelines_goodstanding : data.communityguidelines_goodstanding=='true'?1:0,
+					copyrightstrikes_goodstanding : data.copyrightstrikes_goodstanding=='true'?1:0,
+					contentidclaims_goodstanding : data.contentidclaims_goodstanding=='true'?1:0,
 					created_at : +new Date
 				}, send_response)
 				.end();

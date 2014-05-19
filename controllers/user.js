@@ -57,6 +57,9 @@ exports.auth_google_callback = function (req, res, next) {
 		},
 		done = function (err, user, info) {
 			if (err) return next(err);
+			console.log(user);
+			console.log(info);
+
 			switch (info) {
 				case 0 :
 					as_helper.getAccessToken({

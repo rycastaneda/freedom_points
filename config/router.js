@@ -1,5 +1,6 @@
 var user = require(__dirname + '/../controllers/user'),
-	channel = require(__dirname + '/../controllers/channel');
+	channel = require(__dirname + '/../controllers/channel'),
+	prospect = require(__dirname + '/../controllers/prospect'),
 	earnings = require(__dirname + '/../controllers/earnings');
 
 module.exports = function (router, logger) {
@@ -24,6 +25,12 @@ module.exports = function (router, logger) {
 	//earnings related routes
 	router.get('/earnings/date_range', earnings.getRangeOfPayments);
 	router.get('/earnings/generate_sum', earnings.generateSummedPayouts);
+
+	//prospect related routes
+	router.post('/prospect/add', prospect.add_prospect);
+
+
+
 
 	router.get('/auth/callback', function (req, res, next) {
 		if (req.query.state === 'google')

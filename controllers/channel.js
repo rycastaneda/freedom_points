@@ -7,7 +7,7 @@ var config = require(__dirname + '/../config/config'),
 	googleapis = require('googleapis'),
     OAuth2 = googleapis.auth.OAuth2;
 
-oauth2Client = new OAuth2(config.googleAuth.clientID, config.googleAuth.clientSecret, config.googleAuth.callbackURL);;
+oauth2Client = new OAuth2(config.googleAuth.clientID, config.googleAuth.clientSecret, config.googleAuth.callbackURL);
 
 exports.auth_channel = function (req, res, next) {
 	res.redirect(oauth2Client.generateAuthUrl({
@@ -81,8 +81,6 @@ exports.auth_youtube_callback = function (req, res, next) {
 
 
 exports.add_channel = function (req, res, next) {
-
-	//curl ka ng self.edit at channels.add na scope for the user
 	var data = util.get_data([
 			'_id',
 			'network_id',
@@ -98,9 +96,6 @@ exports.add_channel = function (req, res, next) {
 			'contentidclaims_goodstanding'
 		], [], req.body),
 		get_username = function () {
-			// console.log(data._id);
-			// if (err) return next(err);
-			console.log('g_username');
 			curl.get
 				.to('gdata.youtube.com', 80, '/feeds/api/users/' + data._id)
 				.send({alt : 'json'})
@@ -108,19 +103,13 @@ exports.add_channel = function (req, res, next) {
 				.then(next)
 		},
 		insert_channel = function (status, json) {
-			console.log('g_insert');
 			if (status === 200) {
 				data.channel_username = json.entry['yt$username']['$t'];
-				data.overall_goodstanding = data.overall_goodstanding=='true'?1:0;
-				data.copyrightstrikes_goodstanding = data.copyrightstrikes_goodstanding=='true'?1:0;
-				data.contentidclaims_goodstanding = data.contentidclaims_goodstanding=='true'?1:0;
-				data.communityguidelines_goodstanding = data.communityguidelines_goodstanding=='true'?1:0;
-				data.created_at = +new Date;
-
-				console.log(data);
 				mysql.open(config.db_freedom)
 					.query('INSERT into channel SET ?', data, insert_stat)
 					.end();
+			} else {
+				next('Failed  to get username');
 			}
 		},
 		insert_stat = function (err, result) {
@@ -128,7 +117,6 @@ exports.add_channel = function (req, res, next) {
 				return next('Channel already exist :(');
 			if (err)
 				return next(err);
-			console.log(data);
 			mysql.open(config.db_freedom)
 				.query('INSERT into channel_stats SET ?', {
 					channel_id : data._id,
@@ -137,10 +125,10 @@ exports.add_channel = function (req, res, next) {
 					subscribers : data.total_subscribers,
 					videos : data.total_videos,
 					comment : data.total_comments,
-					overall_goodstanding : data.overall_goodstanding=='true'?1:0,
-					communityguidelines_goodstanding : data.communityguidelines_goodstanding=='true'?1:0,
-					copyrightstrikes_goodstanding : data.copyrightstrikes_goodstanding=='true'?1:0,
-					contentidclaims_goodstanding : data.contentidclaims_goodstanding=='true'?1:0,
+					overall_goodstanding : data.overall_goodstanding,
+					communityguidelines_goodstanding : data.communityguidelines_goodstanding,
+					copyrightstrikes_goodstanding : data.copyrightstrikes_goodstanding,
+					contentidclaims_goodstanding : data.contentidclaims_goodstanding,
 					created_at : +new Date
 				}, insert_mongo)
 				.end();
@@ -178,6 +166,10 @@ exports.add_channel = function (req, res, next) {
 	data.last30_days = data.total_videos;
 	data.created_at = +new Date;
 	data.network_name = 'network name'; // should be from db
+	data.overall_goodstanding = data.overall_goodstanding === 'true' ? 1 : 0;
+	data.communityguidelines_goodstanding = data.communityguidelines_goodstanding === 'true' ? 1 : 0;
+	data.copyrightstrikes_goodstanding = data.copyrightstrikes_goodstanding === 'true' ? 1 : 0;
+	data.contentidclaims_goodstanding = data.contentidclaims_goodstanding === 'true' ? 1 : 0;
 
 	//check scope here
 	as_helper.hasScopes(req.signedCookies.access_token, 'channel.add', get_username, next);

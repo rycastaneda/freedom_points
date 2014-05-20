@@ -199,7 +199,7 @@ exports.search = function (req, res, next) {
 			part : 'id, snippet, statistics',
 			forUsername : req.query.key || req.params.key,
 			maxResults : 1,
-			fields : 'items(id, snippet/title, snippet/publishedAt, statistics/viewCount, statistics/subscriberCount)',
+			fields : 'items(id, snippet/title, snippet/publishedAt, snippet/thumbnails/default, statistics/viewCount, statistics/subscriberCount, statistics/videoCount)',
 			key : config.google_api_key
 		})
 		.then(res.send.bind(res))

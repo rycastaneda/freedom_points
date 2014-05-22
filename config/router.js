@@ -1,6 +1,7 @@
 var user = require(__dirname + '/../controllers/user'),
 	channel = require(__dirname + '/../controllers/channel'),
 	prospect = require(__dirname + '/../controllers/prospect'),
+	admin = require(__dirname + '/../controllers/admin'),
 	earnings = require(__dirname + '/../controllers/earnings');
 
 module.exports = function (router, logger) {
@@ -20,6 +21,10 @@ module.exports = function (router, logger) {
 	router.get('/channels', channel.get_channels);
 	router.get('/channel/add', channel.auth_channel);
 	router.post('/channel/add', channel.add_channel);
+
+	// admin
+	router.get('/admin/partners', admin.find_applicants);
+	router.post('/admin/partner/:id', admin.accept_applicant);
 
 
 	//earnings related routes

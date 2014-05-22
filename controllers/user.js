@@ -65,7 +65,7 @@ exports.auth_google_callback = function (req, res, next) {
 					as_helper.getAccessToken({
 						user_id : user.user_data._id,
 						scope_token : user.scope_token,
-						scopes : config.scopes.all
+						scopes : config.scopes.all + ',' + config.scopes.staff
 					}, sendResponse);
 					break;
 				case 1 :
@@ -156,7 +156,7 @@ exports.partner = function (req, res, next) {
 			as_helper.addScopes({
 				access_token : data.access_token,
 				user_id : _data.user_data._id,
-				scopes : config.scopes.all + ',' + config.scopes.channel + ',' + config.scopes.payout
+				scopes : config.scopes.all + ',' + config.scopes.staff + ',' + config.scopes.channel + ',' + config.scopes.payout
 			}, res.send.bind(res), next);
 		};
 	logger.log('info', 'Someone wants to be a partner');

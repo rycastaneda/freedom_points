@@ -5,6 +5,8 @@ use freedom;
 drop table if exists channel;
 CREATE TABLE channel(
 	_id varchar(64) primary key,
+	user_id varchar(64) not null,
+	linked_cms enum('Manage', 'Affiliated') default null,
 	network_id varchar(64),
 	network_name varchar(256) ,
 	partnership_status boolean  default false,
@@ -45,23 +47,15 @@ CREATE TABLE  channel_stats (
 drop table if exists prospects;
 CREATE TABLE prospects (
 	_id int(10) unsigned NOT NULL AUTO_INCREMENT,
-	recruiter_id int(10) unsigned NOT NULL,
+	recruiter_id varchar(266)  NOT NULL,
+	recruiter_email varchar(255) NOT NULL,
+	username varchar(255) NOT NULL,
+	owner varchar(255) NOT NULL,
 	status varchar(255) NOT NULL,
 	thumbnail varchar(255) NOT NULL,
-	name varchar(255) NOT NULL,
-	owner varchar(255) NOT NULL,
-	link varchar(255) NOT NULL,
-	location varchar(255) NOT NULL,
-	published varchar(255) NOT NULL,
-	subs varchar(255) NOT NULL,
-	views varchar(255) NOT NULL,
-	rate varchar(255) NOT NULL,
-	daterecruited datetime NOT NULL,
-	note varchar(500) NOT NULL,
-	notedate datetime NOT NULL,
-	messaging_link varchar(255) NOT NULL,
+	note varchar(500),
 	created_at bigint(15)  not null,
-	updated_at bigint(15)
-  PRIMARY KEY (id)
+	updated_at bigint(15),
+	PRIMARY KEY (_id)
 );
 

@@ -27,6 +27,7 @@ module.exports = function (router, logger) {
 	router.get('/earnings/generate_sum', earnings.generateSummedPayouts);
 
 	//prospect related routes
+	router.get('/prospects', prospect.get_prospects);
 	router.post('/prospect/add', prospect.add_prospect);
 
 

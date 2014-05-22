@@ -88,3 +88,10 @@ exports.hasScopes = function (access_token, scopes, scb, ecb) {
 		scopes : scopes
 	}, scb, ecb);
 };
+
+
+exports.updateAppData = function (data, scb, ecb) {
+	data.app_id = config.app_id;
+	data.app_data = JSON.stringify(data.app_data);
+	curlToAS('POST', '/app/own_app_data', data, scb, ecb);
+};

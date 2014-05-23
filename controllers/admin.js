@@ -45,11 +45,7 @@ exports.accept_applicant = function(req, res, next){
             .update(
                 {channel : req.params.id},
                 {$set : {
-                            approver: {
-                                admin : {
-                                    status : true
-                                }
-                            }
+                            "approver.admin.status" : true
                         }
                 },
                 {},
@@ -65,7 +61,13 @@ exports.accept_applicant = function(req, res, next){
             res.send(200, 'Admin acceptance successful.');
         else
             res.send(400, "Admin acceptance failed.");
-    };
+    },
+    check_all_approvs = function() {
+        mongo.collection('partnership')
+            .query()
+            .end();
+    }
+    ;
 
     update();
 

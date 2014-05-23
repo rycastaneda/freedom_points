@@ -43,6 +43,7 @@ exports.add_prospect = function (req, res, next) {
 exports.get_prospects = function (req, res, next) {
 	var get_prospects = function (err, res) {
 			if (err) return next(err);
+			console.dir(res);
 			mysql.open(config.db_freedom)
 				.query('SELECT * FROM prospects WHERE recruiter_id = ?', res.user_data._id, send_response)
 				.end();

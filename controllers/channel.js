@@ -95,15 +95,9 @@ exports.add_channel = function (req, res, next) {
 			'copyrightstrikes_goodstanding',
 			'contentidclaims_goodstanding'
 		], [], req.body),
-		get_user_id = function () {
-			as_helper.getInfo({
-				access_token : req.signedCookies.access_token,
-				self : true
-			}, get_username);
-		},
 		get_username = function (err, _data) {
 			if (err) return next(err);
-			data.user_id = _data.user_data._id;
+			data.user_id = req.user_id;
 			curl.get
 				.to('gdata.youtube.com', 80, '/feeds/api/users/' + data._id)
 				.send({alt : 'json'})
@@ -180,7 +174,7 @@ exports.add_channel = function (req, res, next) {
 	data.contentidclaims_goodstanding = data.contentidclaims_goodstanding === 'true' ? 1 : 0;
 
 	//check scope here
-	as_helper.hasScopes(req.signedCookies.access_token, 'channel.add', get_user_id, next);
+	as_helper.hasScopes(req.signedCookies.access_token, 'channel.add', get_username, next);
 };
 
 

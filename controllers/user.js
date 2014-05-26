@@ -65,7 +65,8 @@ exports.auth_google_callback = function (req, res, next) {
 					as_helper.getAccessToken({
 						user_id : user.user_data._id,
 						scope_token : user.scope_token,
-						scopes : config.scopes.all + ',' + config.scopes.staff
+						scopes : config.scopes.all
+//						+ ',' + config.scopes.staff
 					}, sendResponse);
 					break;
 				case 1 :
@@ -105,17 +106,9 @@ exports.auth_google_callback = function (req, res, next) {
 };
 
 exports.info = function (req, res, next) {
-	var data = {},
-		sendResponse = function (err, data) {
-			if (err) return next(err);
-			res.send(data.user_data);
-		};
-
-	if (!(data.access_token = req.signedCookies.access_token))
+	if (!req.signedCookies.access_token)
 		return next('access_token is missing');
-
-	data.self = true;
-	as_helper.getInfo(data, sendResponse);
+	res.send(req.user.user_data);
 };
 
 exports.logout = function (req, res, next) {
@@ -130,40 +123,42 @@ exports.logout = function (req, res, next) {
 };
 
 exports.staff = function (req, res, next) {
-	var data = {},
-		addScope = function (err, _data) {
-			if (err) return next(err);
-			as_helper.addScopes({
-				access_token : data.access_token,
-				user_id : _data.user_data._id,
-				scopes : config.scopes.all + ',' + config.scopes.staff + ',' + config.scopes.payout
+	var updateAppData = function () {
+			as_helper.updateAppData({
+				user_id : req.user_id,
+				access_token : req.signedCookies.access_token,
+				app_data : {
+					role : 'Staff'
+				}
 			}, res.send.bind(res), next);
 		};
+
 	logger.log('info', 'Someone wants to be a staff');
 
-	if (!(data.access_token = req.signedCookies.access_token))
-		return next('access_token is missing');
-
-	data.self = true;
-	as_helper.getInfo(data, addScope);
+	as_helper.addScopes({
+		access_token : req.signedCookies.access_token,
+		user_id : req.user_id,
+		scopes : config.scopes.all + ',' + config.scopes.staff + ',' + config.scopes.payout
+	}, updateAppData, next);
 };
 
 
 exports.partner = function (req, res, next) {
-	var data = {},
-		addScope = function (err, _data) {
-			if (err) return next(err);
-			as_helper.addScopes({
-				access_token : data.access_token,
-				user_id : _data.user_data._id,
-				scopes : config.scopes.all + ',' + config.scopes.staff + ',' + config.scopes.channel + ',' + config.scopes.payout
+	var updateAppData = function () {
+			as_helper.updateAppData({
+				access_token : req.signedCookies.access_token,
+				user_id : req.user_id,
+				app_data : {
+					role : 'Partner'
+				}
 			}, res.send.bind(res), next);
 		};
+
 	logger.log('info', 'Someone wants to be a partner');
 
-	if (!(data.access_token = req.signedCookies.access_token))
-		return next('access_token is missing');
-
-	data.self = true;
-	as_helper.getInfo(data, addScope);
+	as_helper.addScopes({
+		access_token : req.signedCookies.access_token,
+		user_id : req.user_id,
+		scopes : config.scopes.all + ',' + config.scopes.staff + ',' + config.scopes.channel + ',' + config.scopes.payout
+	}, updateAppData, next);
 };

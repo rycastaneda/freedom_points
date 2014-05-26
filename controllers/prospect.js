@@ -10,15 +10,9 @@ exports.add_prospect = function (req, res, next) {
 			'owner',
 			'thumbnail'
 		], [], req.body),
-		get_info = function () {
-			as_helper.getInfo({
-				access_token : req.signedCookies.access_token,
-				self : true
-			}, insert);
-		},
 		insert = function (err, result) {
-			data.recruiter_id = result.user_data._id;
-			data.recruiter_email = result.user_data.email;
+			data.recruiter_id = req.user_id;
+			data.recruiter_email = req.user.user_data.email;
 			mysql.open(config.db_freedom)
 				.query('INSERT into prospects SET ?', data, send_response)
 				.end();
@@ -37,27 +31,17 @@ exports.add_prospect = function (req, res, next) {
 	data.status = 'Lead';
 	data.created_at = +new Date;
 
-	as_helper.hasScopes(req.signedCookies.access_token, 'recruiter.all', get_info, next);
+	as_helper.hasScopes(req.signedCookies.access_token, 'recruiter.all', insert, next);
 };
 
 exports.get_prospects = function (req, res, next) {
-	var get_prospects = function (err, res) {
-			if (err) return next(err);
-			mysql.open(config.db_freedom)
-				.query('SELECT * FROM prospects WHERE recruiter_id = ?', res.user_data._id, send_response)
-				.end();
-		},
-		send_response = function (err, result) {
+	var send_response = function (err, result) {
 			if (err) return next(err);
 			res.send(result);
 		};
 
-	if (!req.signedCookies.access_token)
-		return next('access_token is missing');
-
-	as_helper.getInfo({
-		access_token : req.signedCookies.access_token,
-		self : true
-	}, get_prospects);
+	mysql.open(config.db_freedom)
+		.query('SELECT * FROM prospects WHERE recruiter_id = ?', req.user_id, send_response)
+		.end();
 };
 

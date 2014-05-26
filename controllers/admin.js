@@ -11,12 +11,6 @@ exports.find_applicants = function(req, res, next){
         page=1,
         size=10;
 
-    switch(req.query.status){
-        case "all": stat = "1 or partnership_status = 0"; break;
-        case "verified": stat = 1; break;
-        default: stat = 0; break;
-    }
-
     if(!isNaN(req.query.page)) {
         page = req.query.page;;
     }
@@ -24,15 +18,16 @@ exports.find_applicants = function(req, res, next){
     page = (page - 1) * 10;
 
     if(!isNaN(req.query.size)) {
-        size = req.query.size;
+        size = parseInt(req.query.size,10);
         if(size >=100 ) {
             size = 100;
         }
     }
-    console.log("SELECT _id, channel_name, last30_days, channel_username from channel where partnership_status ="+stat+" LIMIT "+page+","+size+";");
 
     mysql.open(config.db_freedom)
-        .query("SELECT _id, channel_name, last30_days, channel_username from channel where partnership_status ="+stat+" LIMIT "+page+","+size+";",function(err, result){
+        .query("SELECT _id, channel_name, last30_days, channel_username from channel where partnership_status = 0 LIMIT ? , ?;",[page, size],function(err, result){
+            if(err) next(err);
+
             res.send(200, result);
         }).end();
 };
@@ -45,7 +40,7 @@ exports.accept_applicant = function(req, res, next){
             .update(
                 {channel : req.params.id},
                 {$set : {
-                            "approver.admin.status" : true
+                            "approver.admin.status" : false
                         }
                 },
                 {},
@@ -53,22 +48,42 @@ exports.accept_applicant = function(req, res, next){
                 );
     },
     send_response = function(err, countModif) {
-        console.log(err);
-        console.log(countModif);
         if(err) next(err);
 
         if(countModif > 0)
-            res.send(200, 'Admin acceptance successful.');
+            check_all_approvs();
         else
-            res.send(400, "Admin acceptance failed.");
+            res.send(400, {message: "Admin acceptance failed"});
     },
     check_all_approvs = function() {
         mongo.collection('partnership')
-            .query()
-            .end();
+            .find({channel: req.params.id})
+            .toArray(function(err, result) {
+                if(err) next(err);
+
+                var approvers = result[0].approver;
+
+                // check if all status are true
+                for(var i in approvers){
+
+                    //  if one of the status are false, other approvers haven't approved yet
+                    if(approvers[i].status === false){
+                        res.send(200, {message: "Admin Acceptance successful"});
+                        return;
+                    }
+                }
+
+                // all approvers have status  === true, now update SQL database;
+                mysql.open(config.db_freedom)
+                    .query("UPDATE channel SET partnership_status = 1 where _id = ?",[req.params.id], function(err, result){
+                        if(err) next(err);
+
+                        res.send(200,{message: "All approvers verified."});
+                    })
+                    .end();
+            });
     }
     ;
-
     update();
 
 }

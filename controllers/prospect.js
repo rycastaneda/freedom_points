@@ -12,7 +12,7 @@ exports.add_prospect = function (req, res, next) {
 		], [], req.body),
 		insert = function (err, result) {
 			data.recruiter_id = req.user_id;
-			data.recruiter_email = req.user.email;
+			data.recruiter_email = req.user.user_data.email;
 			mysql.open(config.db_freedom)
 				.query('INSERT into prospects SET ?', data, send_response)
 				.end();

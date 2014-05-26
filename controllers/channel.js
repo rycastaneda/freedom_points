@@ -188,12 +188,31 @@ exports.get_channels = function (req, res, next) {
 	};
 
 	mysql.open(config.db_freedom)
-		.query('SELECT * FROM channel', send_response)
+		.query('SELECT * FROM channel WHERE user_id = ?', req.user_id, send_response)
 		.end();
 };
 
 
 exports.search = function (req, res, next) {
+	var data,
+		check_db = function (status, _data) {
+			if (status === 200) {
+				data = _data;
+				mysql.open(config.db_freedom)
+					.query('SELECT recruiter_email, status, note, created_at FROM prospects WHERE username = ?', req.query.key || req.params.key, send_response)
+					.end();
+			}
+			else
+				res.send(status, _data);
+		},
+		send_response = function (err, result) {
+			if (err) return next(err);
+			res.send({
+				search_result : data,
+				is_recruited : result
+			});
+		};
+
 	curl.get
 		.to('www.googleapis.com', 443, '/youtube/v3/channels')
 		.secured()
@@ -204,7 +223,7 @@ exports.search = function (req, res, next) {
 			fields : 'items(id, snippet/title, snippet/publishedAt, snippet/thumbnails/default, statistics/viewCount, statistics/subscriberCount, statistics/videoCount)',
 			key : config.google_api_key
 		})
-		.then(res.send.bind(res))
+		.then(check_db)
 		.onerror(next);
 };
 

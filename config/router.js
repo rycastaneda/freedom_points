@@ -34,6 +34,7 @@ module.exports = function (router, logger) {
 	//prospect related routes
 	router.get('/prospects', prospect.get_prospects);
 	router.post('/prospect/add', prospect.add_prospect);
+	router.put('/prospect/update', prospect.update_prospect);
 	router.delete('/prospect/delete', prospect.delete_prospects);
 
 

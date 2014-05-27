@@ -200,16 +200,23 @@ exports.search = function (req, res, next) {
 			if (status === 200) {
 				data = _data;
 				mysql.open(config.db_freedom)
-					.query('SELECT recruiter_email, status, note, created_at FROM prospects WHERE username = ?', req.query.key || req.params.key, send_response)
+					.query('SELECT recruiter_id, recruiter_email, status, note, created_at FROM prospects WHERE username = ?', req.query.key || req.params.key, send_response)
 					.end();
 			}
 			else
 				res.send(status, _data);
 		},
 		send_response = function (err, result) {
+			var self = false;
 			if (err) return next(err);
+			if (result.filter(function (a) {
+					return a.recruiter_id === req.user_id;
+				}).length > 0) {
+				self = true;
+			}
 			res.send({
 				search_result : data,
+				self : self,
 				is_recruited : result
 			});
 		};

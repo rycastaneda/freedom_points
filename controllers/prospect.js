@@ -63,6 +63,7 @@ exports.delete_prospects = function (req, res, next) {
 };
 
 exports.update_prospect = function (req, res, next) {
+	console.dir(req.body);
 	var data =  util.get_data([], ['status', 'note'], req.body),
 		allowed_statuses = ['Lead', 'Contacted', 'Pitched', 'Demo', 'Negotiating', 'Closed (lost)' , 'Closed (won)'],
 		send_response = function (err, result) {
@@ -76,6 +77,8 @@ exports.update_prospect = function (req, res, next) {
 		return next('Invalid status');
 	if (!req.body.id)
 		return next('Prospect id is missing');
+	if (data.note === ' ')
+		data.note = '';
 
 	mysql.open(config.db_freedom)
 		.query('UPDATE prospects SET ? WHERE recruiter_id = ? AND _id = ?', [data, req.user_id, req.body.id], send_response)

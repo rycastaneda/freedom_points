@@ -11,10 +11,9 @@ exports.get_data = function (reqd, optional, body) {
         ret[temp] = body[temp];
     }
 	i = optional.length;
-    while (i--) {
+    while (i--)
         if (body[temp = optional[i]])
 			ret[temp] = body[temp];
-    }
     return ret;
 };
 

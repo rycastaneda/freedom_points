@@ -96,17 +96,14 @@ exports.add_channel = function (req, res, next) {
 			'contentidclaims_goodstanding'
 		], [], req.body),
 		get_username = function (status, _data) {
-			if (status === 200) {
-				data.user_id = req.user_id;
-				curl.get
-					.to('gdata.youtube.com', 80, '/feeds/api/users/' + data._id)
-					.send({alt : 'json'})
-					.then(insert_channel)
-					.then(next)
-			}
-			else {
+			if (status !== 200)
 				return next(_data);
-			}
+			data.user_id = req.user_id;
+			curl.get
+				.to('gdata.youtube.com', 80, '/feeds/api/users/' + data._id)
+				.send({alt : 'json'})
+				.then(insert_channel)
+				.then(next)
 		},
 		insert_channel = function (status, json) {
 			if (status === 200) {

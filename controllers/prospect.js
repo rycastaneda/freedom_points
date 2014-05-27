@@ -62,3 +62,22 @@ exports.delete_prospects = function (req, res, next) {
 		.end();
 };
 
+exports.update_prospect = function (req, res, next) {
+	var data =  util.get_data([], ['status', 'note'], req.body),
+		allowed_statuses = ['Lead', 'Contacted', 'Pitched', 'Demo', 'Negotiating', 'Closed (lost)' , 'Closed (won)'],
+		send_response = function (err, result) {
+			if (err) return next(err);
+			res.send(result);
+		};
+
+	if (!req.user)
+		return next('access_token is missing');
+	if (data.status && !~allowed_statuses.indexOf(req.body.status))
+		return next('Invalid status');
+	if (!req.body.id)
+		return next('Prospect id is missing');
+
+	mysql.open(config.db_freedom)
+		.query('UPDATE prospects SET ? WHERE recruiter_id = ? AND _id = ?', [data, req.user_id, req.body.id], send_response)
+		.end();
+};

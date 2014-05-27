@@ -127,3 +127,4 @@ exports.currentDate = function () {
 	var d = new Date();
 	return [d.getFullYear(), this.pad(d.getMonth() + 1), this.pad(d.getDate())].join('-');
 };
+

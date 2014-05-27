@@ -108,7 +108,7 @@ exports.auth_google_callback = function (req, res, next) {
 exports.info = function (req, res, next) {
 	if (!req.signedCookies.access_token)
 		return next('access_token is missing');
-	res.send(req.user.user_data);
+	res.send(req.user);
 };
 
 exports.logout = function (req, res, next) {

@@ -33,7 +33,7 @@ exports.find_applicants = function(req, res, next){
         };
 
     if(req.kj)
-        as_helper.hasScopes(req.access_token, 'admin.view_all', query, next);
+        as_helper.has_scopes(req.access_token, 'admin.view_all', query, next);
     else res.send(401, {message : "Unauthorized"});
 };
 
@@ -91,7 +91,7 @@ exports.accept_applicant = function(req, res, next){
     ;
 
     if(check_admin(req) === 0)
-        as_helper.hasScopes(req.access_token, 'admin.add_all', update, next);
+        as_helper.has_scopes(req.access_token, 'admin.add_all', update, next);
     else res.send(401, {message : "Unauthorized"});
 
 }

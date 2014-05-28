@@ -34,7 +34,7 @@ exports.add_prospect = function (req, res, next) {
 	data.status = 'Lead';
 	data.created_at = +new Date;
 
-	as_helper.hasScopes(req.access_token, 'recruiter.all', insert, next);
+	as_helper.has_scopes(req.access_token, 'recruiter.all', insert, next);
 };
 
 exports.get_prospects = function (req, res, next) {
@@ -68,7 +68,6 @@ exports.delete_prospects = function (req, res, next) {
 };
 
 exports.update_prospect = function (req, res, next) {
-	console.dir(req.body);
 	var data =  util.get_data([], ['status', 'note'], req.body),
 		allowed_statuses = ['Lead', 'Contacted', 'Pitched', 'Demo', 'Negotiating', 'Closed (lost)' , 'Closed (won)'],
 		send_response = function (err, result) {

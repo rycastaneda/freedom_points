@@ -5,14 +5,16 @@ var config = require(__dirname + '/../config/config'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),
     curl = require(__dirname + '/../lib/curl'),
 	googleapis = require('googleapis'),
-    OAuth2 = googleapis.auth.OAuth2;
+    OAuth2 = googleapis.auth.OAuth2,
+	oauth2_client = new OAuth2(config.google_auth.client_id, config.google_auth.client_secret, config.google_auth.callback_URL);
 
-oauth2Client = new OAuth2(config.googleAuth.clientID, config.googleAuth.clientSecret, config.googleAuth.callbackURL);
 
 exports.auth_channel = function (req, res, next) {
+
 	if (!req.access_token)
 		return next('access_token is missing');
-	res.redirect(oauth2Client.generateAuthUrl({
+
+	res.redirect(oauth2_client.generateAuthUrl({
 		state : 'channel',
 		access_type: 'offline',
 		approval_prompt : 'force',
@@ -54,7 +56,7 @@ exports.auth_youtube_callback = function (req, res, next) {
 			res.cookie('channels', JSON.stringify(data));
 			res.redirect(config.frontend_server_url + '/channels/add');
 		},
-		getClient = function(err, client) {
+		get_client = function(err, client) {
 			if (err) return next(err);
 			client.youtube.channels.list({
 					part : 'id, snippet, auditDetails, brandingSettings, contentDetails, invideoPromotion, statistics, status, topicDetails',
@@ -62,14 +64,14 @@ exports.auth_youtube_callback = function (req, res, next) {
 				})
 				.execute(redirect);
 		},
-		getTokens = function(err, _tokens) {
+		get_tokens = function(err, _tokens) {
 			if (err) return next(err);
 			tokens = _tokens;
-			oauth2Client.setCredentials(_tokens);
+			oauth2_client.setCredentials(_tokens);
 			googleapis
 				.discover('youtube', 'v3')
-				.withAuthClient(oauth2Client)
-				.execute(getClient);
+				.withAuthClient(oauth2_client)
+				.execute(get_client);
 		};
 
 	// @override
@@ -81,7 +83,7 @@ exports.auth_youtube_callback = function (req, res, next) {
 	if (!req.access_token)
 		return next('access_token is missing');
 
-	oauth2Client.getToken(req.query.code, getTokens);
+	oauth2_client.getToken(req.query.code, get_tokens);
 };
 
 
@@ -180,7 +182,7 @@ exports.add_channel = function (req, res, next) {
 			else {
 				req.user_data.channels_owned.push(data._id);
 			}
-			as_helper.updateAppData({
+			as_helper.update_app_data({
 				access_token : req.access_token,
 				user_id : req.user_id,
 				app_data : req.user_data
@@ -206,7 +208,7 @@ exports.add_channel = function (req, res, next) {
 	data.contentidclaims_goodstanding = data.contentidclaims_goodstanding === 'true' ? 1 : 0;
 
 	//check scope here
-	as_helper.hasScopes(req.access_token, 'channel.add', get_username, next);
+	as_helper.has_scopes(req.access_token, 'channel.add', get_username, next);
 };
 
 

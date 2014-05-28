@@ -26,7 +26,6 @@ module.exports = function (router, logger) {
 	// admin
 	router.get('/admin/partners', admin.find_applicants);
 	router.post('/admin/partner/:id', admin.accept_applicant);
-	router.post('/admin/identify', admin.verify_uid);
 
 
 	//earnings related routes

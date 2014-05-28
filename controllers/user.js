@@ -80,8 +80,7 @@ exports.auth_google_callback = function (req, res, next) {
                     as_helper.getAccessToken({
                         user_id : user.user_data._id,
                         scope_token : user.scope_token,
-                        scopes : config.scopes.all
-//                      + ',' + config.scopes.staff
+                        scopes : config.scopes.all + ',' + config.scopes.staff
                     }, sendResponse);
                     break;
                 case 1 :
@@ -140,13 +139,12 @@ exports.logout = function (req, res, next) {
 };
 
 exports.staff = function (req, res, next) {
-    var updateAppData = function () {
+    var roles = ['all', 'staff', 'channel', 'payout'],
+		updateAppData = function () {
             as_helper.updateAppData({
                 user_id : req.user_id,
                 access_token : req.signedCookies.access_token,
-                app_data : {
-                    role : 'Staff'
-                }
+                app_data : {roles : roles}
             }, res.send.bind(res), next);
         };
 
@@ -155,19 +153,20 @@ exports.staff = function (req, res, next) {
     as_helper.addScopes({
         access_token : req.signedCookies.access_token,
         user_id : req.user_id,
-        scopes : config.scopes.all + ',' + config.scopes.staff + ',' + config.scopes.payout
+        scopes : roles.map(function (a) {
+					return config.scopes[a];
+				}).join(',')
     }, updateAppData, next);
 };
 
 
 exports.partner = function (req, res, next) {
-    var updateAppData = function () {
+    var roles = ['all', 'staff', 'channel', 'payout'],
+		updateAppData = function () {
             as_helper.updateAppData({
                 access_token : req.signedCookies.access_token,
                 user_id : req.user_id,
-                app_data : {
-                    role : 'Partner'
-                }
+                app_data : {roles : roles}
             }, res.send.bind(res), next);
         };
 
@@ -176,6 +175,8 @@ exports.partner = function (req, res, next) {
     as_helper.addScopes({
         access_token : req.signedCookies.access_token,
         user_id : req.user_id,
-        scopes : config.scopes.all + ',' + config.scopes.staff + ',' + config.scopes.channel + ',' + config.scopes.payout
+        scopes : roles.map(function (a) {
+					return config.scopes[a];
+				}).join(',')
     }, updateAppData, next);
 };

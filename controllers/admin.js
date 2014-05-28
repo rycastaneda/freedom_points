@@ -2,62 +2,39 @@ var config = require(__dirname + '/../config/config'),
 	mysql = require(__dirname + '/../lib/mysql'),
 	mongo = require(__dirname + '/../lib/mongoskin'),
 	util = require(__dirname + '/../helpers/util'),
-	as_helper = require(__dirname + '/../helpers/auth_server'),
-
-    // Stability : 2, if something went wrong
-    // check this thing first
-    crypto = require('crypto')
+	as_helper = require(__dirname + '/../helpers/auth_server')
 	;
-
-exports.verify_uid = function(req,res,next){
-    var decipher,
-        decrypted,
-        hex,
-        split;
-
-    if(req.cookies.uid){
-        decipher = crypto.createDecipher('aes-256-cbc', '4NydotTv');
-
-        hex = req.cookies.uid.split('.');
-
-        decipher.update(hex[0], 'hex', 'utf8');
-        decrypted = decipher.final('utf8');
-
-        if(decrypted === "admin=true")
-            res.send(200, {message : "parsed", type: "admin"});
-        else if(decrypted === "admin=false")
-            res.send(200, {message: "parsed", type:"default"});
-        else
-            res.send(400, {message: "something went wrong with UID parsing"});
-
-    } else res.send(400, {message : "Missing uid"});
-};
 
 exports.find_applicants = function(req, res, next){
     var data = {},
         stat,
         page=1,
-        size=10;
+        size=10,
+        query = function(req, res){
+            if(!isNaN(req.query.page)) {
+                page = req.query.page;;
+            }
 
-    if(!isNaN(req.query.page)) {
-        page = req.query.page;;
-    }
+            page = (page - 1) * 10;
 
-    page = (page - 1) * 10;
+            if(!isNaN(req.query.size)) {
+                size = parseInt(req.query.size,10);
+                if(size >=100 ) {
+                    size = 100;
+                }
+            }
 
-    if(!isNaN(req.query.size)) {
-        size = parseInt(req.query.size,10);
-        if(size >=100 ) {
-            size = 100;
-        }
-    }
+            mysql.open(config.db_freedom)
+                .query("SELECT _id, channel_name, last30_days, channel_username from channel where partnership_status = 0 LIMIT ? , ?;",[page, size],function(err, result){
+                    if(err) next(err);
 
-    mysql.open(config.db_freedom)
-        .query("SELECT _id, channel_name, last30_days, channel_username from channel where partnership_status = 0 LIMIT ? , ?;",[page, size],function(err, result){
-            if(err) next(err);
+                    res.send(200, result);
+                }).end();
+        };
 
-            res.send(200, result);
-        }).end();
+    if(req.kj)
+        as_helper.hasScopes(req.signedCookies.access_token, 'admin.view_all', query, next);
+    else res.send(401, {message : "Unauthorized"});
 };
 
 
@@ -112,6 +89,9 @@ exports.accept_applicant = function(req, res, next){
             });
     }
     ;
-    update();
+
+    if(check_admin(req) === 0)
+        as_helper.hasScopes(req.signedCookies.access_token, 'admin.add_all', update, next);
+    else res.send(401, {message : "Unauthorized"});
 
 }

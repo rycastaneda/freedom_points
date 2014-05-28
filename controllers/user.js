@@ -4,11 +4,6 @@ var config = require(__dirname + '/../config/config'),
     curl = require(__dirname + '/../lib/curl'),
     as_helper = require(__dirname + '/../helpers/auth_server'),
     googleapis = require('googleapis'),
-
-    // this is currently being developed by nodejs.org . Stability : 2
-    // susceptible to change so if errors arise, check this first
-    crypto = require('crypto'),
-
     OAuth2 = googleapis.auth.OAuth2;
 
 oauth2Client = new OAuth2(config.googleAuth.clientID, config.googleAuth.clientSecret, config.googleAuth.callbackURL);
@@ -20,7 +15,7 @@ exports.register = function (req, res, next) {
     logger.log('info', 'Someone is trying to register');
     res.clearCookie('data');
 
-	data.app_data.roles = 'all,staff';
+	data.roles = 'all,staff';
 
     curl.post
         .to(config.auth_server.host, config.auth_server.port, '/user/register')
@@ -63,9 +58,8 @@ exports.auth_google_callback = function (req, res, next) {
             res.redirect(config.frontend_server_url + '/overview');
         },
         done = function (err, user, info) {
-			var user_data = JSON.stringify(user)[config.app_id + 'user_data'];
             if (err) return next(err);
-          
+
             switch (info) {
                 case 0 :
                     as_helper.getAccessToken({

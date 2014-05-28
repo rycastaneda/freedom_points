@@ -31,10 +31,11 @@ exports.find_applicants = function(req, res, next){
                     res.send(200, result);
                 }).end();
         };
-
-    if(req.kj)
+   /* if(req.)
         as_helper.hasScopes(req.signedCookies.access_token, 'admin.view_all', query, next);
-    else res.send(401, {message : "Unauthorized"});
+    else
+		next("Unauthorized");
+*/
 };
 
 
@@ -58,7 +59,7 @@ exports.accept_applicant = function(req, res, next){
         if(countModif > 0)
             check_all_approvs();
         else
-            res.send(400, {message: "Admin acceptance failed"});
+			next("Admin acceptance failed");
     },
     check_all_approvs = function() {
         mongo.collection('partnership')
@@ -90,8 +91,9 @@ exports.accept_applicant = function(req, res, next){
     }
     ;
 
-    if(check_admin(req) === 0)
+/*    if(check_admin(req) === 0)
         as_helper.hasScopes(req.signedCookies.access_token, 'admin.add_all', update, next);
-    else res.send(401, {message : "Unauthorized"});
-
+    else
+		next("Unauthorized");
+*/
 }

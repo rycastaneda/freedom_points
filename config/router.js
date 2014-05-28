@@ -6,6 +6,7 @@ var user = require(__dirname + '/../controllers/user'),
 
 module.exports = function (router, logger) {
 
+	//user related routes
 	router.get('/user', user.info);
 	router.put('/user', user.update);
 	router.get('/logout', user.logout);

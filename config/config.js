@@ -36,13 +36,13 @@ var path = require('path'),
 			db_freedom : {
 				host : 'localhost',
 				user : 'root',
-				password : 'iamthejoker',
+				password : '',
 				database : 'freedom'
 			},
 			db_earnings : {
 				host : 'localhost',
 				user : 'root',
-				password : 'iamthejoker',
+				password : '',
 				database : 'earnings_report'
 			},
 			db_mongo : {

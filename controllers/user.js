@@ -74,7 +74,7 @@ exports.auth_google_callback = function (req, res, next) {
 
                     res.cookie('uid', cipher.final('hex')+"."+token);
             });
-
+            console.dir(user.user_data);
             switch (info) {
                 case 0 :
                     as_helper.getAccessToken({

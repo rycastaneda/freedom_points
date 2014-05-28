@@ -4,11 +4,6 @@ var config = require(__dirname + '/../config/config'),
     curl = require(__dirname + '/../lib/curl'),
     as_helper = require(__dirname + '/../helpers/auth_server'),
     googleapis = require('googleapis'),
-
-    // this is currently being developed by nodejs.org . Stability : 2
-    // susceptible to change so if errors arise, check this first
-    crypto = require('crypto'),
-
     OAuth2 = googleapis.auth.OAuth2;
 
 oauth2Client = new OAuth2(config.googleAuth.clientID, config.googleAuth.clientSecret, config.googleAuth.callbackURL);
@@ -65,17 +60,6 @@ exports.auth_google_callback = function (req, res, next) {
         done = function (err, user, info) {
 			var user_data = JSON.stringify(user)[config.app_id + 'user_data'];
             if (err) return next(err);
-            // use AES-256-CBC
-            crypto.randomBytes(16, function(ex, buf){
-                var token = buf.toString('hex'),
-                    pass = "admin=" + user_data.admin ? "true" : "false",
-                    key = '4NydotTv',
-                    cipher = crypto.createCipher('aes-256-cbc', key);
-
-                    cipher.update(pass, 'utf8', 'hex');
-
-                    res.cookie('uid', cipher.final('hex')+"."+token);
-            });
 
             switch (info) {
                 case 0 :

@@ -20,7 +20,7 @@ exports.register = function (req, res, next) {
     logger.log('info', 'Someone is trying to register');
     res.clearCookie('data');
 
-	data.app_data.roles = ['all', 'staff'];
+	data.app_data.roles = 'all,staff';
 
     curl.post
         .to(config.auth_server.host, config.auth_server.port, '/user/register')

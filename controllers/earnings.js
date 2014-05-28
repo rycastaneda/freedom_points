@@ -9,9 +9,14 @@ var config = require(__dirname + '/../config/config'),
 //get each earnings from the database 'earnings_report'
 //based from each feature from the dashboard, eto yung mga nasa overview tab
 exports.get_channel_earnings = function(req,res,next) {
-	var data = util.chk_rqd(['user_id','report_id'], req.body, next);
+	var data = util.get_data([
+			'access_token',
+			'report_id'
+		], [], req.query);
 
 
+	if(typeof data === 'string')
+		return next(data);
 };
 
 exports.getNetworkEarnings = function(req,res,next) {
@@ -44,12 +49,15 @@ exports.get_range_of_payments = function(req,res,next) {
 			res.send(data);
 			return;
 		},
-		get_range = function(err,user_data) {
+		get_range = function(err,dt) {
 			if(err)
 				return next(err);
-			mysql.open(config.db_earnings)
-				.query('SELECT id, start_date, end_date date from report group by id;',done)
-				.end();
+			mysql.open(config.db_earnings);
+			console.log(new Date(dt.user_data.created_at));
+			if(!user_data)
+					mysql.query('SELECT id, start_date, end_date date from report group by id order by id desc;',done).end();
+			else 
+					mysql.query('SELECT id, start_date, end_date date from report where DATE_FORMAT(start_date,"%Y-%m") >= ? group by id order by id desc;',done).end();
 		};
 
 
@@ -58,9 +66,9 @@ exports.get_range_of_payments = function(req,res,next) {
 	if(req.query.all)
 		get_range();
 	else if(req.query.user_id)
-		as_helper.getInfo({user_id:req.query.user_id}, get_range);
+		as_helper.getInfo({access_token:req.query.access_token,user_id:req.query.user_id}, get_range);
 	else 
-		as_helper.getInfo({self:true}, get_range);
+		as_helper.getInfo({access_token:req.query.access_token,self:true}, get_range);
 
 };
 

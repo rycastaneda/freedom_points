@@ -54,62 +54,6 @@ exports.auth_google = function (req, res, next) {
 };
 
 exports.auth_google_callback = function (req, res, next) {
-<<<<<<< HEAD
-	var tokens,
-		sendResponse = function (err, data) {
-			if (err) return next(err);
-			res.cookie('access_token', data, { signed : true });
-			res.redirect(config.frontend_server_url + '/overview');
-		},
-		done = function (err, user, info) {
-			if (err) return next(err);
-			console.log(user);
-			console.log(info);
-
-			switch (info) {
-				case 0 :
-					as_helper.getAccessToken({
-						user_id : user.user_data._id,
-						scope_token : user.scope_token,
-						scopes : config.scopes.all
-//						+ ',' + config.scopes.staff
-					}, sendResponse);
-					break;
-				case 1 :
-					if (~user.email.indexOf('@pages.plusgoogle.com'))
-						user.email = '';
-					res.cookie('data', JSON.stringify(user));
-					res.redirect(config.frontend_server_url + '/register');
-			}
-		},
-		loginToAS = function (err, response) {
-			if (err) return next(err);
-			as_helper.login(response, tokens.access_token, tokens.refresh_token, done)
-		},
-		getClient = function (err, client) {
-			if (err) return next(err);
-			client
-				.oauth2.userinfo.get()
-				.withAuthClient(oauth2Client)
-				.execute(loginToAS);
-		},
-		getTokens = function(err, _tokens) {
-			if (err) return next(err);
-			tokens = _tokens;
-			oauth2Client.setCredentials(_tokens);
-			googleapis
-				.discover('oauth2', 'v2')
-				.execute(getClient);
-		};
-
-	// @override
-	next = function (err) {
-		res.cookie('error', err);
-		res.redirect(config.frontend_server_url + '/error');
-	};
-
-	oauth2Client.getToken(req.query.code, getTokens);
-=======
     var tokens,
         sendResponse = function (err, data) {
             if (err) return next(err);
@@ -176,7 +120,6 @@ exports.auth_google_callback = function (req, res, next) {
     };
 
     oauth2Client.getToken(req.query.code, getTokens);
->>>>>>> 91c0da2dbd74b231e1536279318fad01ef30fd37
 };
 
 exports.info = function (req, res, next) {

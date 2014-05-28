@@ -151,7 +151,7 @@ exports.add_channel = function (req, res, next) {
 					channel : data._id,
 					approver : {
 						admin : {
-							user_id : 1,	//dummy
+							user_id : null,	//dummy
 							status : false,
 							comments : ''
 						},

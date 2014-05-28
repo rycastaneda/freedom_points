@@ -20,6 +20,8 @@ exports.register = function (req, res, next) {
     logger.log('info', 'Someone is trying to register');
     res.clearCookie('data');
 
+	data.app_data.roles = 'all,staff';
+
     curl.post
         .to(config.auth_server.host, config.auth_server.port, '/user/register')
         .send(data)
@@ -66,7 +68,7 @@ exports.auth_google_callback = function (req, res, next) {
             // use AES-256-CBC
             crypto.randomBytes(16, function(ex, buf){
                 var token = buf.toString('hex'),
-                    pass = "admin=" + (user_data && user_data.admin ? "true" : "false"),
+                    pass = "admin=" + user_data.admin ? "true" : "false",
                     key = '4NydotTv',
                     cipher = crypto.createCipher('aes-256-cbc', key);
 
@@ -80,7 +82,9 @@ exports.auth_google_callback = function (req, res, next) {
                     as_helper.getAccessToken({
                         user_id : user.user_data._id,
                         scope_token : user.scope_token,
-                        scopes : config.scopes.all + ',' + config.scopes.staff
+                        scopes : user.user_data[config.app_id + '_data'].map(function (a) {
+									return config.scopes[a];
+								}).join(',')
                     }, sendResponse);
                     break;
                 case 1 :

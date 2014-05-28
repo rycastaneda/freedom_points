@@ -58,7 +58,6 @@ exports.auth_google_callback = function (req, res, next) {
             res.redirect(config.frontend_server_url + '/overview');
         },
         done = function (err, user, info) {
-			var user_data = JSON.stringify(user)[config.app_id + 'user_data'];
             if (err) return next(err);
 
             switch (info) {

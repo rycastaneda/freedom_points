@@ -100,14 +100,21 @@ exports.add_channel = function (req, res, next) {
 				return next(_data);
 			data.user_id = req.user_id;
 			curl.get
-				.to('gdata.youtube.com', 80, '/feeds/api/users/' + data._id)
-				.send({alt : 'json'})
+				.to('www.googleapis.com', 443, '/youtube/v3/search')
+				.secured()
+				.send({
+					part : 'snippet',
+					channelId : data._id,
+					maxResults : 1,
+					fields : 'items(snippet/channelTitle)',
+					key : config.google_api_key
+				})
 				.then(insert_channel)
-				.then(next)
+				.then(next);
 		},
 		insert_channel = function (status, json) {
 			if (status === 200) {
-				data.channel_username = json.entry['yt$username']['$t'];
+				data.channel_username = json.items[0].snippet.channelTitle;
 				mysql.open(config.db_freedom)
 					.query('INSERT into channel SET ?', data, insert_stat)
 					.end();
@@ -195,30 +202,65 @@ exports.get_channels = function (req, res, next) {
 
 
 exports.search = function (req, res, next) {
-	var data,
-		check_db = function (status, _data) {
-			if (status === 200) {
-				data = _data;
-				mysql.open(config.db_freedom)
-					.query('SELECT recruiter_id, recruiter_email, status, note, created_at FROM prospects WHERE username = ?', req.query.key || req.params.key, send_response)
-					.end();
+	var data = {},
+		get_first_video = function (status, _data) {
+			if (status !== 200)
+				return res.send(status, _data);
+			data.search_result = _data;
+			if (_data.items.length === 0)
+				return send_response();
+			data.search_result.items[0].scm = null;
+			curl.get
+				.to('www.googleapis.com', 443, '/youtube/v3/search')
+				.secured()
+				.send({
+					part : 'snippet',
+					channelId : _data.items[0].id,
+					maxResults : 1,
+					fields : 'items(id/videoId)',
+					key : config.google_api_key
+				})
+				.then(get_scm)
+				.onerror(next);
+		},
+		get_scm = function (status, _data) {
+			if (status !== 200)
+				return res.send(status, _data);
+			if (_data.items.length === 0)
+				return send_response();
+			curl.get
+				.to('www.youtube.com', 443, '/watch')
+				.raw()
+				.secured()
+				.send({v : _data.items[0].id.videoId})
+				.then(check_db)
+				.onerror(next);
+		},
+		check_db = function (status, raw) {
+			var match;
+			if (status !== 200)
+				return res.send(status, raw);
+			match = raw.match(/\<meta name=(\")?attribution(\")?(\s*)content=(.{1,50})\>/gi);
+			if (match && match[0]) {
+				match = match[0].substring(31);
+				data.search_result.items[0].scm = match.substring(0, match.length - 2);
 			}
-			else
-				res.send(status, _data);
+			mysql.open(config.db_freedom)
+				.query('SELECT recruiter_id, recruiter_email, status, note, created_at FROM prospects WHERE username = ?', req.query.key || req.params.key, send_response)
+				.end();
 		},
 		send_response = function (err, result) {
-			var self = false;
+			data.self = false;
 			if (err) return next(err);
-			if (result.filter(function (a) {
-					return a.recruiter_id === req.user_id;
-				}).length > 0) {
-				self = true;
+			if (result) {
+				data.is_recruited = result;
+				if (result.filter(function (a) {
+						return a.recruiter_id === req.user_id;
+					}).length > 0) {
+					data.self = true;
+				}
 			}
-			res.send({
-				search_result : data,
-				self : self,
-				is_recruited : result
-			});
+			res.send(data);
 		};
 
 	curl.get
@@ -231,7 +273,7 @@ exports.search = function (req, res, next) {
 			fields : 'items(id, snippet/title, snippet/publishedAt, snippet/thumbnails/default, statistics/viewCount, statistics/subscriberCount, statistics/videoCount)',
 			key : config.google_api_key
 		})
-		.then(check_db)
+		.then(get_first_video)
 		.onerror(next);
 };
 

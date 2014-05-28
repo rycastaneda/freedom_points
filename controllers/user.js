@@ -61,14 +61,12 @@ exports.auth_google_callback = function (req, res, next) {
             res.redirect(config.frontend_server_url + '/overview');
         },
         done = function (err, user, info) {
+			var user_data = JSON.stringify(user)[config.app_id + 'user_data'];
             if (err) return next(err);
-
-            var clean = JSON.parse(JSON.stringify(user).replace("665f627007666750b092f6a68396ed76","")).user_data,
-                bool = (clean._data.admin) ? "true" : "false";
             // use AES-256-CBC
             crypto.randomBytes(16, function(ex, buf){
                 var token = buf.toString('hex'),
-                    pass = "admin="+bool,
+                    pass = "admin=" + (user_data && user_data.admin ? "true" : "false"),
                     key = '4NydotTv',
                     cipher = crypto.createCipher('aes-256-cbc', key);
 
@@ -82,8 +80,7 @@ exports.auth_google_callback = function (req, res, next) {
                     as_helper.getAccessToken({
                         user_id : user.user_data._id,
                         scope_token : user.scope_token,
-                        scopes : config.scopes.all
-//                      + ',' + config.scopes.staff
+                        scopes : config.scopes.all + ',' + config.scopes.staff
                     }, sendResponse);
                     break;
                 case 1 :
@@ -125,6 +122,8 @@ exports.auth_google_callback = function (req, res, next) {
 exports.info = function (req, res, next) {
     if (!req.signedCookies.access_token)
         return next('access_token is missing');
+	req.user.app_data = req.user[config.app_id + '_data'];
+	delete req.user[config.app_id + '_data'];
     res.send(req.user);
 };
 
@@ -140,13 +139,12 @@ exports.logout = function (req, res, next) {
 };
 
 exports.staff = function (req, res, next) {
-    var updateAppData = function () {
+    var roles = ['all', 'staff', 'channel', 'payout'],
+		updateAppData = function () {
             as_helper.updateAppData({
                 user_id : req.user_id,
                 access_token : req.signedCookies.access_token,
-                app_data : {
-                    role : 'Staff'
-                }
+                app_data : {roles : roles}
             }, res.send.bind(res), next);
         };
 
@@ -155,19 +153,20 @@ exports.staff = function (req, res, next) {
     as_helper.addScopes({
         access_token : req.signedCookies.access_token,
         user_id : req.user_id,
-        scopes : config.scopes.all + ',' + config.scopes.staff + ',' + config.scopes.payout
+        scopes : roles.map(function (a) {
+					return config.scopes[a];
+				}).join(',')
     }, updateAppData, next);
 };
 
 
 exports.partner = function (req, res, next) {
-    var updateAppData = function () {
+    var roles = ['all', 'staff', 'channel', 'payout'],
+		updateAppData = function () {
             as_helper.updateAppData({
                 access_token : req.signedCookies.access_token,
                 user_id : req.user_id,
-                app_data : {
-                    role : 'Partner'
-                }
+                app_data : {roles : roles}
             }, res.send.bind(res), next);
         };
 
@@ -176,6 +175,8 @@ exports.partner = function (req, res, next) {
     as_helper.addScopes({
         access_token : req.signedCookies.access_token,
         user_id : req.user_id,
-        scopes : config.scopes.all + ',' + config.scopes.staff + ',' + config.scopes.channel + ',' + config.scopes.payout
+        scopes : roles.map(function (a) {
+					return config.scopes[a];
+				}).join(',')
     }, updateAppData, next);
 };

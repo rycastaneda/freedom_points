@@ -114,7 +114,9 @@ exports.add_channel = function (req, res, next) {
 		},
 		insert_channel = function (status, json) {
 			if (status === 200) {
-				data.channel_username = json.items[0].snippet.channelTitle;
+				data.channel_username = json.items[0]
+					? json.items[0].snippet.channelTitle
+					: data._id.substring(2);
 				mysql.open(config.db_freedom)
 					.query('INSERT into channel SET ?', data, insert_stat)
 					.end();
@@ -163,15 +165,32 @@ exports.add_channel = function (req, res, next) {
 					},
 					created_at : +new Date,
 					updated_at : +new Date
-				}, send_response);
+				}, update_app_data);
 		},
-		send_response = function (err, result) {
+		update_app_data = function (err) {
 			if (err) return next(err);
+			if (!req.user_data.channels_owned) {
+				req.user_data.channels_owned = [data._id];
+			}
+			else {
+				req.user_data.channels_owned.push(data._id);
+			}
+			as_helper.updateAppData({
+				access_token : req.access_token,
+				user_id : req.user_id,
+				app_data : req.user_data
+			}, send_response, next);
+		},
+		send_response = function (status, data) {
+			if (status !== 200)
+				return next(data);
 			res.send({message : 'Channel was successfully added'});
 		};
 
 	if (typeof data === 'string')
 		return next(data);
+	if (!req.user)
+		return next('access_token is missing');
 
 	data.last30_days = data.total_videos;
 	data.created_at = +new Date;

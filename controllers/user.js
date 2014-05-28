@@ -65,18 +65,7 @@ exports.auth_google_callback = function (req, res, next) {
         done = function (err, user, info) {
 			var user_data = JSON.stringify(user)[config.app_id + 'user_data'];
             if (err) return next(err);
-            // use AES-256-CBC
-            crypto.randomBytes(16, function(ex, buf){
-                var token = buf.toString('hex'),
-                    pass = "admin=" + user_data.admin ? "true" : "false",
-                    key = '4NydotTv',
-                    cipher = crypto.createCipher('aes-256-cbc', key);
-
-                    cipher.update(pass, 'utf8', 'hex');
-
-                    res.cookie('uid', cipher.final('hex')+"."+token);
-            });
-            console.dir(user.user_data);
+          
             switch (info) {
                 case 0 :
                     as_helper.getAccessToken({

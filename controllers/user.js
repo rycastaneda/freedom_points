@@ -25,9 +25,12 @@ exports.register = function (req, res, next) {
 
 exports.update = function (req, res, next) {
     var data = req.body;
-    data.access_token = req.signedCookies.access_token
+    data.access_token = req.access_token;
 
     logger.log('info', 'Someone is trying to update profile');
+
+	if (!req.access_token)
+		return next('access_token is missing');
 
     curl.put
         .to(config.auth_server.host, config.auth_server.port, '/user')
@@ -106,17 +109,22 @@ exports.auth_google_callback = function (req, res, next) {
 };
 
 exports.info = function (req, res, next) {
-    if (!req.signedCookies.access_token)
+    if (!req.access_token)
         return next('access_token is missing');
-	req.user.app_data = req.user[config.app_id + '_data'];
+
+	req.user.app_data = req.user_data;
 	delete req.user[config.app_id + '_data'];
     res.send(req.user);
 };
 
 exports.logout = function (req, res, next) {
     logger.log('info', 'Someone is logging out');
+
+	if (!req.access_token)
+		return next('access_token is missing');
+
     as_helper.logout({
-        access_token : req.signedCookies.access_token,
+        access_token : req.access_token,
         app_id : config.app_id
     }, function () {
         res.clearCookie('access_token');
@@ -129,15 +137,18 @@ exports.staff = function (req, res, next) {
 		updateAppData = function () {
             as_helper.updateAppData({
                 user_id : req.user_id,
-                access_token : req.signedCookies.access_token,
+                access_token : req.access_token,
                 app_data : {roles : roles}
             }, res.send.bind(res), next);
         };
 
     logger.log('info', 'Someone wants to be a staff');
 
+	if (!req.access_token)
+		return next('access_token is missing');
+
     as_helper.addScopes({
-        access_token : req.signedCookies.access_token,
+        access_token : req.access_token,
         user_id : req.user_id,
         scopes : roles.map(function (a) {
 					return config.scopes[a];
@@ -150,7 +161,7 @@ exports.partner = function (req, res, next) {
     var roles = ['all', 'staff', 'channel', 'payout'],
 		updateAppData = function () {
             as_helper.updateAppData({
-                access_token : req.signedCookies.access_token,
+                access_token : req.access_token,
                 user_id : req.user_id,
                 app_data : {roles : roles}
             }, res.send.bind(res), next);
@@ -158,8 +169,11 @@ exports.partner = function (req, res, next) {
 
     logger.log('info', 'Someone wants to be a partner');
 
+	if (!req.access_token)
+		return next('access_token is missing');
+
     as_helper.addScopes({
-        access_token : req.signedCookies.access_token,
+        access_token : req.access_token,
         user_id : req.user_id,
         scopes : roles.map(function (a) {
 					return config.scopes[a];

@@ -10,6 +10,8 @@ var config = require(__dirname + '/../config/config'),
 oauth2Client = new OAuth2(config.googleAuth.clientID, config.googleAuth.clientSecret, config.googleAuth.callbackURL);
 
 exports.auth_channel = function (req, res, next) {
+	if (!req.access_token)
+		return next('access_token is missing');
 	res.redirect(oauth2Client.generateAuthUrl({
 		state : 'channel',
 		access_type: 'offline',
@@ -75,6 +77,9 @@ exports.auth_youtube_callback = function (req, res, next) {
 		res.cookie('error', err);
 		res.redirect(config.frontend_server_url + '/error');
 	};
+
+	if (!req.access_token)
+		return next('access_token is missing');
 
 	oauth2Client.getToken(req.query.code, getTokens);
 };
@@ -187,10 +192,10 @@ exports.add_channel = function (req, res, next) {
 			res.send({message : 'Channel was successfully added'});
 		};
 
+	if (!req.access_token)
+		return next('access_token is missing');
 	if (typeof data === 'string')
 		return next(data);
-	if (!req.user)
-		return next('access_token is missing');
 
 	data.last30_days = data.total_videos;
 	data.created_at = +new Date;
@@ -201,7 +206,7 @@ exports.add_channel = function (req, res, next) {
 	data.contentidclaims_goodstanding = data.contentidclaims_goodstanding === 'true' ? 1 : 0;
 
 	//check scope here
-	as_helper.hasScopes(req.signedCookies.access_token, 'channel.add', get_username, next);
+	as_helper.hasScopes(req.access_token, 'channel.add', get_username, next);
 };
 
 
@@ -213,6 +218,9 @@ exports.get_channels = function (req, res, next) {
 		if (err) return next(err);
 		res.send(result);
 	};
+
+	if (!req.access_token)
+		return next('access_token is missing');
 
 	mysql.open(config.db_freedom)
 		.query('SELECT * FROM channel WHERE user_id = ?', req.user_id, send_response)
@@ -281,6 +289,9 @@ exports.search = function (req, res, next) {
 			}
 			res.send(data);
 		};
+
+	if (!req.access_token)
+		return next('access_token is missing');
 
 	curl.get
 		.to('www.googleapis.com', 443, '/youtube/v3/channels')

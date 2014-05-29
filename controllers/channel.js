@@ -112,6 +112,7 @@ exports.add_channel = function (req, res, next) {
 				.send({
 					part : 'snippet',
 					channelId : data._id,
+					type : 'video',
 					maxResults : 1,
 					fields : 'items(snippet/channelTitle)',
 					key : config.google_api_key
@@ -244,6 +245,7 @@ exports.search = function (req, res, next) {
 				.secured()
 				.send({
 					part : 'snippet',
+					type : 'video',
 					channelId : _data.items[0].id,
 					maxResults : 1,
 					fields : 'items(id/videoId)',
@@ -280,15 +282,13 @@ exports.search = function (req, res, next) {
 		},
 		send_response = function (err, result) {
 			data.self = false;
+			console.dir(result);
+			data.is_recruited = result || [];
 			if (err) return next(err);
-			if (result) {
-				data.is_recruited = result;
-				if (result.filter(function (a) {
-						return a.recruiter_id === req.user_id;
-					}).length > 0) {
-					data.self = true;
-				}
-			}
+			if (result && result.filter(function (a) {
+								return a.recruiter_id === req.user_id;
+							}).length > 0)
+				data.self = true;
 			res.send(data);
 		};
 

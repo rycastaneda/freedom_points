@@ -2,8 +2,7 @@ var config = require(__dirname + '/../config/config'),
 	mysql = require(__dirname + '/../lib/mysql'),
 	mongo = require(__dirname + '/../lib/mongoskin'),
 	util = require(__dirname + '/../helpers/util'),
-	as_helper = require(__dirname + '/../helpers/auth_server')
-	;
+	as_helper = require(__dirname + '/../helpers/auth_server');
 
 exports.find_applicants = function(req, res, next){
     var data = {},
@@ -30,12 +29,11 @@ exports.find_applicants = function(req, res, next){
 
                     res.send(200, result);
                 }).end();
-        };
-   /* if(req.)
+
+    if(req.user_data && req.user_data.admin)
         as_helper.hasScopes(req.signedCookies.access_token, 'admin.view_all', query, next);
     else
 		next("Unauthorized");
-*/
 };
 
 
@@ -51,7 +49,7 @@ exports.accept_applicant = function(req, res, next){
                 },
                 {},
                 send_response
-                );
+			);
     },
     send_response = function(err, countModif) {
         if(err) next(err);
@@ -88,12 +86,10 @@ exports.accept_applicant = function(req, res, next){
                     })
                     .end();
             });
-    }
-    ;
+    };
 
-/*    if(check_admin(req) === 0)
-        as_helper.hasScopes(req.signedCookies.access_token, 'admin.add_all', update, next);
+    if(req.user_data && req.user_data.admin)
+        as_helper.hasScopes(req.signedCookies.access_token, 'admin.add_all', query, next);
     else
 		next("Unauthorized");
-*/
 }

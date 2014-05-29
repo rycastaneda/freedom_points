@@ -11,11 +11,10 @@ oauth2Client = new OAuth2(config.googleAuth.clientID, config.googleAuth.clientSe
 exports.register = function (req, res, next) {
     var data = req.body;
     data.app_id = config.app_id;
+	data.roles = 'all,staff';
 
     logger.log('info', 'Someone is trying to register');
     res.clearCookie('data');
-
-	data.roles = 'all,staff';
 
     curl.post
         .to(config.auth_server.host, config.auth_server.port, '/user/register')
@@ -65,7 +64,7 @@ exports.auth_google_callback = function (req, res, next) {
                     as_helper.getAccessToken({
                         user_id : user.user_data._id,
                         scope_token : user.scope_token,
-                        scopes : user.user_data[config.app_id + '_data'].map(function (a) {
+                        scopes : user.user_data[config.app_id + '_data'].roles.map(function (a) {
 									return config.scopes[a];
 								}).join(',')
                     }, sendResponse);

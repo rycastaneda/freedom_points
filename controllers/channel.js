@@ -258,7 +258,7 @@ exports.search = function (req, res, next) {
 			if (status !== 200)
 				return res.send(status, _data);
 			if (_data.items.length === 0)
-				return send_response();
+				return check_db(200);
 			curl.get
 				.to('www.youtube.com', 443, '/watch')
 				.raw()
@@ -271,10 +271,12 @@ exports.search = function (req, res, next) {
 			var match;
 			if (status !== 200)
 				return res.send(status, raw);
-			match = raw.match(/\<meta name=(\")?attribution(\")?(\s*)content=(.{1,50})\>/gi);
-			if (match && match[0]) {
-				match = match[0].substring(31);
-				data.search_result.items[0].scm = match.substring(0, match.length - 2);
+			if (raw) {
+				match = raw.match(/\<meta name=(\")?attribution(\")?(\s*)content=(.{1,50})\>/gi);
+				if (match && match[0]) {
+					match = match[0].substring(31);
+					data.search_result.items[0].scm = match.substring(0, match.length - 2);
+				}
 			}
 			mysql.open(config.db_freedom)
 				.query('SELECT recruiter_id, recruiter_email, status, note, created_at FROM prospects WHERE username = ?', req.query.key || req.params.key, send_response)
@@ -282,7 +284,6 @@ exports.search = function (req, res, next) {
 		},
 		send_response = function (err, result) {
 			data.self = false;
-			console.dir(result);
 			data.is_recruited = result || [];
 			if (err) return next(err);
 			if (result && result.filter(function (a) {

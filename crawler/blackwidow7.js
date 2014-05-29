@@ -168,6 +168,7 @@ if (cluster.isMaster) {
 				.send({
 					part : 'snippet',
 					channelId : a._id,
+					type : 'video',
 					maxResults : 1,
 					fields : 'items(id/videoId,snippet/channelTitle)',
 					key : KEY

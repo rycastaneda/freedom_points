@@ -45,7 +45,7 @@ exports.getRangeOfPayments = function(req,res,next) {
 	if(typeof data === 'string')
 		return next(data);
 
-	as_helper.getInfo({self:true}, get_range);
+	as_helper.get_info({self:true}, get_range);
 
 };
 

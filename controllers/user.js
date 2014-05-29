@@ -4,18 +4,16 @@ var config = require(__dirname + '/../config/config'),
     curl = require(__dirname + '/../lib/curl'),
     as_helper = require(__dirname + '/../helpers/auth_server'),
     googleapis = require('googleapis'),
-    OAuth2 = googleapis.auth.OAuth2;
-
-oauth2Client = new OAuth2(config.googleAuth.clientID, config.googleAuth.clientSecret, config.googleAuth.callbackURL);
+    OAuth2 = googleapis.auth.OAuth2,
+	oauth2_client = new OAuth2(config.google_auth.client_id, config.google_auth.client_secret, config.google_auth.callback_URL);
 
 exports.register = function (req, res, next) {
     var data = req.body;
     data.app_id = config.app_id;
+	data.roles = 'all,staff';
 
     logger.log('info', 'Someone is trying to register');
     res.clearCookie('data');
-
-	data.roles = 'all,staff';
 
     curl.post
         .to(config.auth_server.host, config.auth_server.port, '/user/register')
@@ -26,9 +24,12 @@ exports.register = function (req, res, next) {
 
 exports.update = function (req, res, next) {
     var data = req.body;
-    data.access_token = req.signedCookies.access_token
+    data.access_token = req.access_token;
 
     logger.log('info', 'Someone is trying to update profile');
+
+	if (!req.access_token)
+		return next('access_token is missing');
 
     curl.put
         .to(config.auth_server.host, config.auth_server.port, '/user')
@@ -38,7 +39,7 @@ exports.update = function (req, res, next) {
 };
 
 exports.auth_google = function (req, res, next) {
-    res.redirect(oauth2Client.generateAuthUrl({
+    res.redirect(oauth2_client.generateAuthUrl({
         state : 'google',
         access_type: 'offline',
         approval_prompt : 'force',
@@ -52,24 +53,23 @@ exports.auth_google = function (req, res, next) {
 
 exports.auth_google_callback = function (req, res, next) {
     var tokens,
-        sendResponse = function (err, data) {
+        send_response = function (err, data) {
             if (err) return next(err);
             res.cookie('access_token', data, { signed : true });
             res.redirect(config.frontend_server_url + '/overview');
         },
         done = function (err, user, info) {
-			var user_data = JSON.stringify(user)[config.app_id + 'user_data'];
             if (err) return next(err);
 
             switch (info) {
                 case 0 :
-                    as_helper.getAccessToken({
+                    as_helper.get_access_token({
                         user_id : user.user_data._id,
                         scope_token : user.scope_token,
-                        scopes : user.user_data[config.app_id + '_data'].map(function (a) {
+                        scopes : user.user_data[config.app_id + '_data'].roles.map(function (a) {
 									return config.scopes[a];
 								}).join(',')
-                    }, sendResponse);
+                    }, send_response);
                     break;
                 case 1 :
                     if (~user.email.indexOf('@pages.plusgoogle.com'))
@@ -78,24 +78,24 @@ exports.auth_google_callback = function (req, res, next) {
                     res.redirect(config.frontend_server_url + '/register');
             }
         },
-        loginToAS = function (err, response) {
+        login_to_AS = function (err, response) {
             if (err) return next(err);
             as_helper.login(response, tokens.access_token, tokens.refresh_token, done)
         },
-        getClient = function (err, client) {
+        get_client = function (err, client) {
             if (err) return next(err);
             client
                 .oauth2.userinfo.get()
-                .withAuthClient(oauth2Client)
-                .execute(loginToAS);
+                .withAuthClient(oauth2_client)
+                .execute(login_to_AS);
         },
-        getTokens = function(err, _tokens) {
+        get_tokens = function(err, _tokens) {
             if (err) return next(err);
             tokens = _tokens;
-            oauth2Client.setCredentials(_tokens);
+            oauth2_client.setCredentials(_tokens);
             googleapis
                 .discover('oauth2', 'v2')
-                .execute(getClient);
+                .execute(get_client);
         };
 
     // @override
@@ -104,21 +104,26 @@ exports.auth_google_callback = function (req, res, next) {
         res.redirect(config.frontend_server_url + '/error');
     };
 
-    oauth2Client.getToken(req.query.code, getTokens);
+    oauth2_client.getToken(req.query.code, get_tokens);
 };
 
 exports.info = function (req, res, next) {
-    if (!req.signedCookies.access_token)
+    if (!req.access_token)
         return next('access_token is missing');
-	req.user.app_data = req.user[config.app_id + '_data'];
+
+	req.user.app_data = req.user_data;
 	delete req.user[config.app_id + '_data'];
     res.send(req.user);
 };
 
 exports.logout = function (req, res, next) {
     logger.log('info', 'Someone is logging out');
+
+	if (!req.access_token)
+		return next('access_token is missing');
+
     as_helper.logout({
-        access_token : req.signedCookies.access_token,
+        access_token : req.access_token,
         app_id : config.app_id
     }, function () {
         res.clearCookie('access_token');
@@ -128,31 +133,34 @@ exports.logout = function (req, res, next) {
 
 exports.staff = function (req, res, next) {
     var roles = ['all', 'staff', 'channel', 'payout'],
-		updateAppData = function () {
-            as_helper.updateAppData({
+		update_app_data = function () {
+            as_helper.update_app_data({
                 user_id : req.user_id,
-                access_token : req.signedCookies.access_token,
+                access_token : req.access_token,
                 app_data : {roles : roles}
             }, res.send.bind(res), next);
         };
 
     logger.log('info', 'Someone wants to be a staff');
 
-    as_helper.addScopes({
-        access_token : req.signedCookies.access_token,
+	if (!req.access_token)
+		return next('access_token is missing');
+
+    as_helper.add_scopes({
+        access_token : req.access_token,
         user_id : req.user_id,
         scopes : roles.map(function (a) {
 					return config.scopes[a];
 				}).join(',')
-    }, updateAppData, next);
+    }, update_app_data, next);
 };
 
 
 exports.partner = function (req, res, next) {
     var roles = ['all', 'staff', 'channel', 'payout'],
-		updateAppData = function () {
-            as_helper.updateAppData({
-                access_token : req.signedCookies.access_token,
+		update_app_data = function () {
+            as_helper.update_app_data({
+                access_token : req.access_token,
                 user_id : req.user_id,
                 app_data : {roles : roles}
             }, res.send.bind(res), next);
@@ -160,11 +168,14 @@ exports.partner = function (req, res, next) {
 
     logger.log('info', 'Someone wants to be a partner');
 
-    as_helper.addScopes({
-        access_token : req.signedCookies.access_token,
+	if (!req.access_token)
+		return next('access_token is missing');
+
+    as_helper.add_scopes({
+        access_token : req.access_token,
         user_id : req.user_id,
         scopes : roles.map(function (a) {
 					return config.scopes[a];
 				}).join(',')
-    }, updateAppData, next);
+    }, update_app_data, next);
 };

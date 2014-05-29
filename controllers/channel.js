@@ -5,12 +5,16 @@ var config = require(__dirname + '/../config/config'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),
     curl = require(__dirname + '/../lib/curl'),
 	googleapis = require('googleapis'),
-    OAuth2 = googleapis.auth.OAuth2;
+    OAuth2 = googleapis.auth.OAuth2,
+	oauth2_client = new OAuth2(config.google_auth.client_id, config.google_auth.client_secret, config.google_auth.callback_URL);
 
-oauth2Client = new OAuth2(config.googleAuth.clientID, config.googleAuth.clientSecret, config.googleAuth.callbackURL);
 
 exports.auth_channel = function (req, res, next) {
-	res.redirect(oauth2Client.generateAuthUrl({
+
+	if (!req.access_token)
+		return next('access_token is missing');
+
+	res.redirect(oauth2_client.generateAuthUrl({
 		state : 'channel',
 		access_type: 'offline',
 		approval_prompt : 'force',
@@ -52,7 +56,7 @@ exports.auth_youtube_callback = function (req, res, next) {
 			res.cookie('channels', JSON.stringify(data));
 			res.redirect(config.frontend_server_url + '/channels/add');
 		},
-		getClient = function(err, client) {
+		get_client = function(err, client) {
 			if (err) return next(err);
 			client.youtube.channels.list({
 					part : 'id, snippet, auditDetails, brandingSettings, contentDetails, invideoPromotion, statistics, status, topicDetails',
@@ -60,14 +64,14 @@ exports.auth_youtube_callback = function (req, res, next) {
 				})
 				.execute(redirect);
 		},
-		getTokens = function(err, _tokens) {
+		get_tokens = function(err, _tokens) {
 			if (err) return next(err);
 			tokens = _tokens;
-			oauth2Client.setCredentials(_tokens);
+			oauth2_client.setCredentials(_tokens);
 			googleapis
 				.discover('youtube', 'v3')
-				.withAuthClient(oauth2Client)
-				.execute(getClient);
+				.withAuthClient(oauth2_client)
+				.execute(get_client);
 		};
 
 	// @override
@@ -76,7 +80,10 @@ exports.auth_youtube_callback = function (req, res, next) {
 		res.redirect(config.frontend_server_url + '/error');
 	};
 
-	oauth2Client.getToken(req.query.code, getTokens);
+	if (!req.access_token)
+		return next('access_token is missing');
+
+	oauth2_client.getToken(req.query.code, get_tokens);
 };
 
 
@@ -105,6 +112,7 @@ exports.add_channel = function (req, res, next) {
 				.send({
 					part : 'snippet',
 					channelId : data._id,
+					type : 'video',
 					maxResults : 1,
 					fields : 'items(snippet/channelTitle)',
 					key : config.google_api_key
@@ -175,7 +183,7 @@ exports.add_channel = function (req, res, next) {
 			else {
 				req.user_data.channels_owned.push(data._id);
 			}
-			as_helper.updateAppData({
+			as_helper.update_app_data({
 				access_token : req.access_token,
 				user_id : req.user_id,
 				app_data : req.user_data
@@ -187,10 +195,10 @@ exports.add_channel = function (req, res, next) {
 			res.send({message : 'Channel was successfully added'});
 		};
 
+	if (!req.access_token)
+		return next('access_token is missing');
 	if (typeof data === 'string')
 		return next(data);
-	if (!req.user)
-		return next('access_token is missing');
 
 	data.last30_days = data.total_videos;
 	data.created_at = +new Date;
@@ -201,7 +209,7 @@ exports.add_channel = function (req, res, next) {
 	data.contentidclaims_goodstanding = data.contentidclaims_goodstanding === 'true' ? 1 : 0;
 
 	//check scope here
-	as_helper.hasScopes(req.signedCookies.access_token, 'channel.add', get_username, next);
+	as_helper.has_scopes(req.access_token, 'channel.add', get_username, next);
 };
 
 
@@ -213,6 +221,9 @@ exports.get_channels = function (req, res, next) {
 		if (err) return next(err);
 		res.send(result);
 	};
+
+	if (!req.access_token)
+		return next('access_token is missing');
 
 	mysql.open(config.db_freedom)
 		.query('SELECT * FROM channel WHERE user_id = ?', req.user_id, send_response)
@@ -234,6 +245,7 @@ exports.search = function (req, res, next) {
 				.secured()
 				.send({
 					part : 'snippet',
+					type : 'video',
 					channelId : _data.items[0].id,
 					maxResults : 1,
 					fields : 'items(id/videoId)',
@@ -246,7 +258,7 @@ exports.search = function (req, res, next) {
 			if (status !== 200)
 				return res.send(status, _data);
 			if (_data.items.length === 0)
-				return send_response();
+				return check_db(200);
 			curl.get
 				.to('www.youtube.com', 443, '/watch')
 				.raw()
@@ -259,10 +271,12 @@ exports.search = function (req, res, next) {
 			var match;
 			if (status !== 200)
 				return res.send(status, raw);
-			match = raw.match(/\<meta name=(\")?attribution(\")?(\s*)content=(.{1,50})\>/gi);
-			if (match && match[0]) {
-				match = match[0].substring(31);
-				data.search_result.items[0].scm = match.substring(0, match.length - 2);
+			if (raw) {
+				match = raw.match(/\<meta name=(\")?attribution(\")?(\s*)content=(.{1,50})\>/gi);
+				if (match && match[0]) {
+					match = match[0].substring(31);
+					data.search_result.items[0].scm = match.substring(0, match.length - 2);
+				}
 			}
 			mysql.open(config.db_freedom)
 				.query('SELECT recruiter_id, recruiter_email, status, note, created_at FROM prospects WHERE username = ?', req.query.key || req.params.key, send_response)
@@ -270,17 +284,17 @@ exports.search = function (req, res, next) {
 		},
 		send_response = function (err, result) {
 			data.self = false;
+			data.is_recruited = result || [];
 			if (err) return next(err);
-			if (result) {
-				data.is_recruited = result;
-				if (result.filter(function (a) {
-						return a.recruiter_id === req.user_id;
-					}).length > 0) {
-					data.self = true;
-				}
-			}
+			if (result && result.filter(function (a) {
+								return a.recruiter_id === req.user_id;
+							}).length > 0)
+				data.self = true;
 			res.send(data);
 		};
+
+	if (!req.access_token)
+		return next('access_token is missing');
 
 	curl.get
 		.to('www.googleapis.com', 443, '/youtube/v3/channels')

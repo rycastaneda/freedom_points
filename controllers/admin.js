@@ -30,7 +30,7 @@ exports.find_applicants = function(req, res, next){
                     res.send(200, result);
                 }).end();
 
-    if(req.user_data && req.user_data.admin)
+    if(req.is_admin)
         as_helper.hasScopes(req.signedCookies.access_token, 'admin.view_all', query, next);
     else
 		next("Unauthorized");
@@ -88,8 +88,8 @@ exports.accept_applicant = function(req, res, next){
             });
     };
 
-    if(req.user_data && req.user_data.admin)
-        as_helper.hasScopes(req.signedCookies.access_token, 'admin.add_all', query, next);
+    if(req.is_admin)
+        as_helper.hasScopes(req.signedCookies.access_token, 'admin.view_all', query, next);
     else
 		next("Unauthorized");
 }

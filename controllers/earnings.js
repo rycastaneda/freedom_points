@@ -50,25 +50,26 @@ exports.get_range_of_payments = function(req,res,next) {
 			return;
 		},
 		get_range = function(err,dt) {
+			var dte;
 			if(err)
 				return next(err);
 			mysql.open(config.db_earnings);
-			console.log(new Date(dt.user_data.created_at));
-			if(!user_data)
+			if(!dt)
 					mysql.query('SELECT id, start_date, end_date date from report group by id order by id desc;',done).end();
-			else 
-					mysql.query('SELECT id, start_date, end_date date from report where DATE_FORMAT(start_date,"%Y-%m") >= ? group by id order by id desc;',done).end();
+			else {
+					dte = new Date('dt.user_data.created_at');
+					console.log(dte);
+					mysql.query('SELECT id, start_date, end_date date from report where DATE_FORMAT(date(start_date),"%Y-%m") >= "'+dte.getFullYear()+'-'+('0'+(dte.getMonth()+1)).slice(-2)+'" group by id order by id desc;',done).end();
+			}
 		};
-
-
 	if(typeof data === 'string')
 		return next(data);
 	if(req.query.all)
 		get_range();
 	else if(req.query.user_id)
-		as_helper.getInfo({access_token:req.query.access_token,user_id:req.query.user_id}, get_range);
+		as_helper.get_info({access_token:req.query.access_token,user_id:req.query.user_id}, get_range);
 	else 
-		as_helper.getInfo({access_token:req.query.access_token,self:true}, get_range);
+		as_helper.get_info({access_token:req.query.access_token,self:true}, get_range);
 
 };
 

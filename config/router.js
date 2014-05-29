@@ -24,8 +24,8 @@ module.exports = function (router, logger) {
 	router.post('/channel/add', channel.add_channel);
 
 	// admin
-	router.get('/admin/partners', admin.find_applicants);
-	router.post('/admin/partner/:id', admin.accept_applicant);
+	router.get('/admin/applicants', admin.find_applicants);
+	router.post('/admin/applicants/:id', admin.accept_applicant);
 
 
 	//earnings related routes

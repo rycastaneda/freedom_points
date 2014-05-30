@@ -344,13 +344,15 @@ exports.get_analytics = function (req, res, next) {
 	var data = {},
 		bearer,
 		published_at,
+		done = false,
 		continents = {
 			africa : '002',
-			americas : '019',
+			america : '019',
 			asia : '142',
 			europe : '150',
 			oceania : '009'
 		},
+		total_requests = 8,
 		continent_count = 5,
 		format_data = function (_data) {
 			var i,
@@ -360,14 +362,13 @@ exports.get_analytics = function (req, res, next) {
 			});
 			_data.data = {};
 			for (i in _data.columnHeaders) {
-				if (_data.rows) {
-					j = _data.rows.length;
-					while (j--) {
-						if (_data.data[_data.columnHeaders[i]])
-							_data.data[_data.columnHeaders[i]].push(_data.rows[j][i]);
-						else
-							_data.data[_data.columnHeaders[i]] = [_data.rows[j][i]];
-					}
+				_data.rows = _data.rows || [];
+				j = _data.rows.length;
+				while (j--) {
+					if (_data.data[_data.columnHeaders[i]])
+						_data.data[_data.columnHeaders[i]].push(_data.rows[j][i]);
+					else
+						_data.data[_data.columnHeaders[i]] = [_data.rows[j][i]];
 				}
 			}
 			delete _data.rows;
@@ -375,16 +376,22 @@ exports.get_analytics = function (req, res, next) {
 		},
 		get_published_at = function () {
 			mysql.open(config.db_freedom)
-				.query('SELECT published_at, access_token FROM channel WHERE user_id = ? AND _id = ?', [req.user_id, req.params.id], get_lifetime)
+				.query('SELECT published_at, access_token FROM channel WHERE user_id = ? AND _id = ?', [req.user_id, req.params.id], buster_call)
 				.end();
 		},
-		get_lifetime = function (err, result) {
+		buster_call = function (err, result) {
 			if (err)
 				return next(err);
 			if (result.length === 0)
 				return next('Unknown channel');
 			published_at = moment(result[0].published_at).format('YYYY-MM-DD');
 			bearer = 'Bearer ' + result[0].access_token;
+			get_lifetime();
+			get_last_30_days();
+			get_per_source();
+			get_per_continent();
+		},
+		get_lifetime = function () {
 			curl.get
 				.to('www.googleapis.com', 443, '/youtube/analytics/v1/reports')
 				.add_header('Authorization', bearer)
@@ -396,57 +403,64 @@ exports.get_analytics = function (req, res, next) {
 					fields : 'columnHeaders/name,rows',
 					metrics : 'views,likes,dislikes,shares,comments,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,annotationClickThroughRate,annotationCloseRate,subscribersGained,subscribersLost'
 				})
-				.then(get_last_30_days)
-				.onerror(next);
+				.then(function (status, _data) {
+					data.lifetime = format_data(_data);
+					send_response(status, _data);
+				})
+				.onerror(function (err) {
+					!done && next(err);
+					done = true;
+				});
 		},
-		get_last_30_days = function (status, _data) {
-			if (status === 200) {
-				data.lifetime = format_data(_data);
-				curl.get
-					.to('www.googleapis.com', 443, '/youtube/analytics/v1/reports')
-					.add_header('Authorization', bearer)
-					.secured()
-					.send({
-						ids : 'channel==' + req.params.id,
-						'start-date' : moment().subtract('months', 1).format('YYYY-MM-DD'),
-						'end-date' : moment().format('YYYY-MM-DD'),
-						fields : 'columnHeaders/name,rows',
-						metrics : 'views,likes,shares,estimatedMinutesWatched,subscribersGained',
-						dimensions : 'day',
-						sort : 'day'
-					})
-					.then(get_per_source)
-					.onerror(next);
-			}
-			else
-				res.send(status, _data);
+		get_last_30_days = function () {
+			curl.get
+				.to('www.googleapis.com', 443, '/youtube/analytics/v1/reports')
+				.add_header('Authorization', bearer)
+				.secured()
+				.send({
+					ids : 'channel==' + req.params.id,
+					'start-date' : moment().subtract('months', 1).format('YYYY-MM-DD'),
+					'end-date' : moment().format('YYYY-MM-DD'),
+					fields : 'columnHeaders/name,rows',
+					metrics : 'views,likes,shares,estimatedMinutesWatched,subscribersGained',
+					dimensions : 'day',
+					sort : 'day'
+				})
+				.then(function (status, _data) {
+					data.last_30_days = format_data(_data);
+					send_response(status, _data);
+				})
+				.onerror(function (err) {
+					!done && next(err);
+					done = true;
+				});
 		},
-		get_per_source = function (status, _data) {
-			if (status === 200) {
-				data.last_30_days = format_data(_data);
-				curl.get
-					.to('www.googleapis.com', 443, '/youtube/analytics/v1/reports')
-					.add_header('Authorization', bearer)
-					.secured()
-					.send({
-						ids : 'channel==' + req.params.id,
-						'start-date' : published_at,
-						'end-date' : moment().format('YYYY-MM-DD'),
-						fields : 'columnHeaders/name,rows',
-						metrics : 'views,estimatedMinutesWatched',
-						dimensions : 'insightPlaybackLocationType'
-					})
-					.then(get_per_continent)
-					.onerror(next);
-			}
-			else
-				res.send(status, _data);
+		get_per_source = function () {
+			curl.get
+				.to('www.googleapis.com', 443, '/youtube/analytics/v1/reports')
+				.add_header('Authorization', bearer)
+				.secured()
+				.send({
+					ids : 'channel==' + req.params.id,
+					'start-date' : published_at,
+					'end-date' : moment().format('YYYY-MM-DD'),
+					fields : 'columnHeaders/name,rows',
+					metrics : 'views,estimatedMinutesWatched',
+					dimensions : 'insightPlaybackLocationType'
+				})
+				.then(function (status, _data) {
+					data.per_source = format_data(_data);
+					send_response(status, _data);
+				})
+				.onerror(function (err) {
+					!done && next(err);
+					done = true;
+				});
 		},
-		get_per_continent = function (status, _data) {
+		get_per_continent = function () {
 			var i;
-			if (status === 200) {
-				data.per_source = format_data(_data);
-				for (i in continents) {
+			for (i in continents) {
+				(function (i) {
 					curl.get
 						.to('www.googleapis.com', 443, '/youtube/analytics/v1/reports')
 						.add_header('Authorization', bearer)
@@ -461,23 +475,26 @@ exports.get_analytics = function (req, res, next) {
 							filters : 'continent==' + continents[i],
 							sort : '-estimatedMinutesWatched'
 						})
-						.then(send_response)
-						.onerror(next);
-				}
+						.then(function (status, _data) {
+							data[Object.keys(continents)[--continent_count]] = format_data(_data);
+							send_response(status, _data);
+						})
+						.onerror(function (err) {
+							!done && next(err);
+							done = true;
+						});
+				})(i);
 			}
-			else
-				res.send(status, _data);
 		},
 		send_response = function (status, _data) {
-			if (status === 200) {
-				data[Object.keys(continents)[--continent_count]] = format_data(_data);
-				if (continent_count === 0) {
-					data.continents = continents;
-					res.send(data);
-				}
-			}
-			else
+			if (!done && status !== 200) {
+				done = true;
 				res.send(status, _data);
+			}
+			else if (!--total_requests) {
+				data.continents = continents;
+				res.send(data);
+			}
 		};
 
 	if (!req.access_token)

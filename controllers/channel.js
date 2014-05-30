@@ -1,4 +1,5 @@
-var config = require(__dirname + '/../config/config'),
+var moment = require('moment'),
+	config = require(__dirname + '/../config/config'),
 	mysql = require(__dirname + '/../lib/mysql'),
 	mongo = require(__dirname + '/../lib/mongoskin'),
 	util = require(__dirname + '/../helpers/util'),
@@ -43,7 +44,7 @@ exports.auth_youtube_callback = function (req, res, next) {
 				data.items.push({
 					_id : response.items[i].id,
 					access_token : tokens.access_token,
-					published_at : response.items[i].snippet.publishedAt,
+					published_at : +new Date(response.items[i].snippet.publishedAt),
 					channel_name : response.items[i].brandingSettings.channel.title,
 					total_views : response.items[i].statistics.viewCount,
 					total_videos : response.items[i].statistics.videoCount,
@@ -152,8 +153,30 @@ exports.add_channel = function (req, res, next) {
 					copyrightstrikes_goodstanding : data.copyrightstrikes_goodstanding,
 					contentidclaims_goodstanding : data.contentidclaims_goodstanding,
 					created_at : +new Date
-				}, insert_partnership	)
+				}, insert_partnership)
 				.end();
+		},
+		insert_partnership = function (err, result) {
+			if (err) return next(err);
+			mongo.collection('partnership')
+				.insert({
+					type : 'channel',
+					channel : data._id,
+					approver : {
+						admin : {
+							user_id : null,	//dummy
+							status : false,
+							comments : ''
+						},
+						approver2 : {
+							user_id : data.network_id,	//dummy
+							status : false,
+							comments : ''
+						}
+					},
+					created_at : +new Date,
+					updated_at : +new Date
+				}, insert_revshare);
 		},
 		insert_revshare = function(err,result) {
 			if (err) return next(err);
@@ -179,28 +202,6 @@ exports.add_channel = function (req, res, next) {
 					updated_at : +new Date
 				}, update_app_data);
 		},
-		insert_partnership = function (err, result) {
-			if (err) return next(err);
-			mongo.collection('partnership')
-				.insert({
-					type : 'channel',
-					channel : data._id,
-					approver : {
-						admin : {
-							user_id : null,	//dummy
-							status : false,
-							comments : ''
-						},
-						approver2 : {
-							user_id : data.network_id,	//dummy
-							status : false,
-							comments : ''
-						}
-					},
-					created_at : +new Date,
-					updated_at : +new Date
-				}, insert_revshare);
-		},
 		update_app_data = function (err) {
 			if (err) return next(err);
 			if (!req.user_data.channels_owned) {
@@ -218,6 +219,7 @@ exports.add_channel = function (req, res, next) {
 		send_response = function (status, data) {
 			if (status !== 200)
 				return next(data);
+			res.clearCookie('channels');
 			res.send({message : 'Channel was successfully added'});
 		};
 
@@ -240,7 +242,7 @@ exports.add_channel = function (req, res, next) {
 
 
 exports.get_channels = function (req, res, next) {
-	var get_channels = function (status, _data) {
+	var get_from_db = function (status, _data) {
 			if (status !== 200)
 				return next(_data);
 			mysql.open(config.db_freedom)
@@ -255,7 +257,7 @@ exports.get_channels = function (req, res, next) {
 	if (!req.access_token)
 		return next('access_token is missing');
 
-	as_helper.has_scopes(req.access_token, 'channel.view', get_channels, next);
+	as_helper.has_scopes(req.access_token, 'channel.view', get_from_db, next);
 };
 
 
@@ -336,6 +338,154 @@ exports.search = function (req, res, next) {
 		})
 		.then(get_first_video)
 		.onerror(next);
+};
+
+exports.get_analytics = function (req, res, next) {
+	var data = {},
+		bearer,
+		published_at,
+		continents = {
+			africa : '002',
+			americas : '019',
+			asia : '142',
+			europe : '150',
+			oceania : '009'
+		},
+		continent_count = 5,
+		format_data = function (_data) {
+			var i,
+				j;
+			_data.columnHeaders = _data.columnHeaders.map(function (a) {
+				return a.name;
+			});
+			_data.data = {};
+			for (i in _data.columnHeaders) {
+				if (_data.rows) {
+					j = _data.rows.length;
+					while (j--) {
+						if (_data.data[_data.columnHeaders[i]])
+							_data.data[_data.columnHeaders[i]].push(_data.rows[j][i]);
+						else
+							_data.data[_data.columnHeaders[i]] = [_data.rows[j][i]];
+					}
+				}
+			}
+			delete _data.rows;
+			return _data;
+		},
+		get_published_at = function () {
+			mysql.open(config.db_freedom)
+				.query('SELECT published_at, access_token FROM channel WHERE user_id = ? AND _id = ?', [req.user_id, req.params.id], get_lifetime)
+				.end();
+		},
+		get_lifetime = function (err, result) {
+			if (err)
+				return next(err);
+			if (result.length === 0)
+				return next('Unknown channel');
+			published_at = moment(result[0].published_at).format('YYYY-MM-DD');
+			bearer = 'Bearer ' + result[0].access_token;
+			curl.get
+				.to('www.googleapis.com', 443, '/youtube/analytics/v1/reports')
+				.add_header('Authorization', bearer)
+				.secured()
+				.send({
+					ids : 'channel==' + req.params.id,
+					'start-date' : published_at,
+					'end-date' : moment().format('YYYY-MM-DD'),
+					fields : 'columnHeaders/name,rows',
+					metrics : 'views,likes,dislikes,shares,comments,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,annotationClickThroughRate,annotationCloseRate,subscribersGained,subscribersLost'
+				})
+				.then(get_last_30_days)
+				.onerror(next);
+		},
+		get_last_30_days = function (status, _data) {
+			if (status === 200) {
+				data.lifetime = format_data(_data);
+				curl.get
+					.to('www.googleapis.com', 443, '/youtube/analytics/v1/reports')
+					.add_header('Authorization', bearer)
+					.secured()
+					.send({
+						ids : 'channel==' + req.params.id,
+						'start-date' : moment().subtract('months', 1).format('YYYY-MM-DD'),
+						'end-date' : moment().format('YYYY-MM-DD'),
+						fields : 'columnHeaders/name,rows',
+						metrics : 'views,likes,shares,estimatedMinutesWatched,subscribersGained',
+						dimensions : 'day',
+						sort : 'day'
+					})
+					.then(get_per_source)
+					.onerror(next);
+			}
+			else
+				res.send(status, _data);
+		},
+		get_per_source = function (status, _data) {
+			if (status === 200) {
+				data.last_30_days = format_data(_data);
+				curl.get
+					.to('www.googleapis.com', 443, '/youtube/analytics/v1/reports')
+					.add_header('Authorization', bearer)
+					.secured()
+					.send({
+						ids : 'channel==' + req.params.id,
+						'start-date' : published_at,
+						'end-date' : moment().format('YYYY-MM-DD'),
+						fields : 'columnHeaders/name,rows',
+						metrics : 'views,estimatedMinutesWatched',
+						dimensions : 'insightPlaybackLocationType'
+					})
+					.then(get_per_continent)
+					.onerror(next);
+			}
+			else
+				res.send(status, _data);
+		},
+		get_per_continent = function (status, _data) {
+			var i;
+			if (status === 200) {
+				data.per_source = format_data(_data);
+				for (i in continents) {
+					curl.get
+						.to('www.googleapis.com', 443, '/youtube/analytics/v1/reports')
+						.add_header('Authorization', bearer)
+						.secured()
+						.send({
+							ids : 'channel==' + req.params.id,
+							'start-date' : published_at,
+							'end-date' : moment().format('YYYY-MM-DD'),
+							fields : 'columnHeaders/name,rows',
+							metrics : 'views,estimatedMinutesWatched,averageViewDuration',
+							dimensions : 'country',
+							filters : 'continent==' + continents[i],
+							sort : '-estimatedMinutesWatched'
+						})
+						.then(send_response)
+						.onerror(next);
+				}
+			}
+			else
+				res.send(status, _data);
+		},
+		send_response = function (status, _data) {
+			if (status === 200) {
+				data[Object.keys(continents)[--continent_count]] = format_data(_data);
+				if (continent_count === 0) {
+					data.continents = continents;
+					res.send(data);
+				}
+			}
+			else
+				res.send(status, _data);
+		};
+
+	if (!req.access_token)
+		return next('access_token is missing');
+	if (!req.params.id)
+		return next('id is missing');
+
+	get_published_at();
 };
 
 

@@ -9,14 +9,19 @@ exports.find_applicants = function(req, res, next){
         stat,
         page=1,
         size=10,
-        query = function(req, res){
-            if(!isNaN(req.query.page)) {
+		queryApplicants = "SELECT _id, user_id, linked_cms, channel_username, channel_name, network_id, " +
+						"network_name, last30_days, total_views, total_comments, total_subscribers, " +
+						"overall_goodstanding, created_at FROM channel WHERE partnership_status = 0 "+
+						"ORDER BY created_at DESC LIMIT ?, ?;",
+        query = function(){
+
+            if( req.query.page && !isNaN(req.query.page)) {
                 page = req.query.page;;
             }
 
-            page = (page - 1) * 10;
+			page = (page - 1) * 10;
 
-            if(!isNaN(req.query.size)) {
+            if(req.query.page && !isNaN(req.query.size)) {
                 size = parseInt(req.query.size,10);
                 if(size >=100 ) {
                     size = 100;
@@ -24,18 +29,22 @@ exports.find_applicants = function(req, res, next){
             }
 
             mysql.open(config.db_freedom)
-                .query("SELECT _id, channel_name, last30_days, channel_username from channel where partnership_status = 0 LIMIT ? , ?;",[page, size],function(err, result){
+                .query(queryApplicants, [page, size],function(err, result){
                     if(err) next(err);
 
                     res.send(200, result);
                 })
 				.end();
+	}
     if(req.is_admin)
-        as_helper.hasScopes(req.signedCookies.access_token, 'admin.view_all', query, next);
+        as_helper.has_scopes(req.signedCookies.access_token, 'admin.view_all', query, next);
     else
 		next("Unauthorized");
 };
 
+exports.view_applicant = function(req, res, next){
+
+};
 
 exports.accept_applicant = function(req, res, next){
     var data = {},
@@ -89,7 +98,7 @@ exports.accept_applicant = function(req, res, next){
     };
 
     if(req.is_admin)
-        as_helper.hasScopes(req.signedCookies.access_token, 'admin.view_all', query, next);
+        as_helper.has_scopes(req.signedCookies.access_token, 'admin.view_all', query, next);
     else
 		next("Unauthorized");
 };

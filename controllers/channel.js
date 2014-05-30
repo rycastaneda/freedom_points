@@ -39,6 +39,7 @@ exports.auth_youtube_callback = function (req, res, next) {
 				i = response.items.length;
 			if (err) return next(err);
 			data.items = [];
+			console.dir(response);
 			while (i--)
 				data.items.push({
 					_id : response.items[i].id,
@@ -253,7 +254,7 @@ exports.get_channels = function (req, res, next) {
 	if (!req.access_token)
 		return next('access_token is missing');
 
-	as_helper.has_scopes(req.access_token, 'channel.view', get_username, next);
+	as_helper.has_scopes(req.access_token, 'channel.view', get_channels, next);
 };
 
 

@@ -57,3 +57,6 @@ exports.current_date = function () {
 	return [d.getFullYear(), this.pad(d.getMonth() + 1), this.pad(d.getDate())].join('-');
 };
 
+exports.cleanString = function (s) {
+	return s.match(/\S{1,30}/g).join(' ');
+};

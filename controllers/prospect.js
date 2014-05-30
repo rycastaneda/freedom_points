@@ -84,6 +84,8 @@ exports.update_prospect = function (req, res, next) {
 	if (data.note === ' ')
 		data.note = '';
 
+	data.updated_at = +new Date;
+
 	mysql.open(config.db_freedom)
 		.query('UPDATE prospects SET ? WHERE recruiter_id = ? AND _id = ?', [data, req.user_id, req.body.id], send_response)
 		.end();

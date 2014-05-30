@@ -238,20 +238,22 @@ exports.add_channel = function (req, res, next) {
 
 
 exports.get_channels = function (req, res, next) {
-
-	//mag curl ka muna sa AS kung may scope na channels.view yung user, tapos dapat mavview nya yung mga owned at manage channels nya
-
-	var send_response = function (err, result) {
-		if (err) return next(err);
-		res.send(result);
-	};
+	var get_channels = function (status, _data) {
+			if (status !== 200)
+				return next(_data);
+			mysql.open(config.db_freedom)
+				.query('SELECT * FROM channel WHERE user_id = ?', req.user_id, send_response)
+				.end();
+		},
+		send_response = function (err, result) {
+			if (err) return next(err);
+			res.send(result);
+		};
 
 	if (!req.access_token)
 		return next('access_token is missing');
 
-	mysql.open(config.db_freedom)
-		.query('SELECT * FROM channel WHERE user_id = ?', req.user_id, send_response)
-		.end();
+	as_helper.has_scopes(req.access_token, 'channel.view', get_username, next);
 };
 
 

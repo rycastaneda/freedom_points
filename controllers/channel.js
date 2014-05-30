@@ -19,14 +19,14 @@ exports.auth_channel = function (req, res, next) {
 		access_type: 'offline',
 		approval_prompt : 'force',
 		scope : [
-			'https://www.googleapis.com/auth/youtube',
-			'https://www.googleapis.com/auth/userinfo.profile',
-			'https://www.googleapis.com/auth/yt-analytics.readonly',
 			'https://www.googleapis.com/auth/userinfo.email',
-			'https://www.googleapis.com/auth/yt-analytics-monetary.readonly',
-			'https://www.googleapis.com/auth/youtubepartner',
+			'https://www.googleapis.com/auth/userinfo.profile',
+			'https://www.googleapis.com/auth/youtube',
 			'https://www.googleapis.com/auth/youtube.readonly',
-			'https://www.googleapis.com/auth/youtubepartner-channel-audit'
+			'https://www.googleapis.com/auth/youtubepartner',
+			'https://www.googleapis.com/auth/youtubepartner-channel-audit',
+			'https://www.googleapis.com/auth/yt-analytics.readonly',
+			'https://www.googleapis.com/auth/yt-analytics-monetary.readonly'
 		].join(' ')
 	}));
 };
@@ -150,10 +150,34 @@ exports.add_channel = function (req, res, next) {
 					copyrightstrikes_goodstanding : data.copyrightstrikes_goodstanding,
 					contentidclaims_goodstanding : data.contentidclaims_goodstanding,
 					created_at : +new Date
-				}, insert_mongo)
+				}, insert_partnership	)
 				.end();
 		},
-		insert_mongo = function (err, result) {
+		insert_revshare = function(err,result) {
+			if (err) return next(err);
+			mongo.collection('revenue_share')
+				.insert({
+					entity_id : data._id,
+					approver : {
+						admin : {
+							user_id : null,	//dummy
+							status : true,		//for first time only, then set to false as default
+							comments : ''
+						},
+						approver2 : {
+							user_id : data.network_id,	//dummy
+							status : true,		//for first time only, then set to false as default
+							comments : ''
+						}
+					},
+					revenue_share : 60,			//default
+					latest : true,
+					date_effective : +new Date,
+					created_at : +new Date,
+					updated_at : +new Date
+				}, update_app_data);
+		},
+		insert_partnership = function (err, result) {
 			if (err) return next(err);
 			mongo.collection('partnership')
 				.insert({
@@ -173,7 +197,7 @@ exports.add_channel = function (req, res, next) {
 					},
 					created_at : +new Date,
 					updated_at : +new Date
-				}, update_app_data);
+				}, insert_revshare);
 		},
 		update_app_data = function (err) {
 			if (err) return next(err);

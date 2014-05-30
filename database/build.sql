@@ -24,6 +24,7 @@ CREATE TABLE channel(
 	copyrightstrikes_goodstanding boolean not null,
 	contentidclaims_goodstanding boolean not null,
 	date_approved int(11) default null,
+	published_at bigint(15) not null,
 	created_at bigint(15)  not null,
 	updated_at bigint(15)
 );

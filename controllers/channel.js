@@ -19,14 +19,14 @@ exports.auth_channel = function (req, res, next) {
 		access_type: 'offline',
 		approval_prompt : 'force',
 		scope : [
-			'https://www.googleapis.com/auth/youtube',
-			'https://www.googleapis.com/auth/userinfo.profile',
-			'https://www.googleapis.com/auth/yt-analytics.readonly',
 			'https://www.googleapis.com/auth/userinfo.email',
-			'https://www.googleapis.com/auth/yt-analytics-monetary.readonly',
-			'https://www.googleapis.com/auth/youtubepartner',
+			'https://www.googleapis.com/auth/userinfo.profile',
+			'https://www.googleapis.com/auth/youtube',
 			'https://www.googleapis.com/auth/youtube.readonly',
-			'https://www.googleapis.com/auth/youtubepartner-channel-audit'
+			'https://www.googleapis.com/auth/youtubepartner',
+			'https://www.googleapis.com/auth/youtubepartner-channel-audit',
+			'https://www.googleapis.com/auth/yt-analytics.readonly',
+			'https://www.googleapis.com/auth/yt-analytics-monetary.readonly'
 		].join(' ')
 	}));
 };

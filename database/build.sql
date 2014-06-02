@@ -61,3 +61,13 @@ CREATE TABLE prospects (
 	PRIMARY KEY (_id)
 );
 
+drop table if exists network;
+CREATE TABLE network (
+	_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+	owner varchar(64) not null,
+	name varchar(64) not null,
+	description TEXT,
+	tags varchar(255),
+	banner varchar(255)
+);
+

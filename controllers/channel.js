@@ -92,7 +92,6 @@ exports.auth_youtube_callback = function (req, res, next) {
 exports.add_channel = function (req, res, next) {
 	var data = util.get_data([
 			'_id',
-			'network_id',
 			'channel_name',
 			'access_token',
 			'refresh_token',
@@ -105,7 +104,7 @@ exports.add_channel = function (req, res, next) {
 			'communityguidelines_goodstanding',
 			'copyrightstrikes_goodstanding',
 			'contentidclaims_goodstanding'
-		], [], req.body),
+		], ['network_id'], req.body),
 		get_username = function (status, _data) {
 			if (status !== 200)
 				return next(_data);
@@ -129,6 +128,9 @@ exports.add_channel = function (req, res, next) {
 				data.channel_username = json.items[0]
 					? json.items[0].snippet.channelTitle
 					: data._id.substring(2);
+
+				// if network_id exists, go get the network_name the insert to database
+
 				mysql.open(config.db_freedom)
 					.query('INSERT into channel SET ?', data, insert_stat)
 					.end();
@@ -158,9 +160,7 @@ exports.add_channel = function (req, res, next) {
 				.end();
 		},
 		insert_partnership = function (err, result) {
-			if (err) return next(err);
-			mongo.collection('partnership')
-				.insert({
+			var datum = {
 					type : 'channel',
 					channel : data._id,
 					approver : {
@@ -168,30 +168,28 @@ exports.add_channel = function (req, res, next) {
 							user_id : null,	//dummy
 							status : false,
 							comments : ''
-						},
-						approver2 : {
-							user_id : data.network_id,	//dummy
-							status : false,
-							comments : ''
 						}
 					},
 					created_at : +new Date,
 					updated_at : +new Date
-				}, insert_revshare);
+				};
+			if (err) return next(err);
+			if (data.network_id) {
+				datum.approver.approver2 = {
+					user_id : data.network_id,	//dummy
+					status : false,
+					comments : ''
+				};
+			}
+			mongo.collection('partnership')
+				.insert(datum, insert_revshare);
 		},
 		insert_revshare = function(err,result) {
-			if (err) return next(err);
-			mongo.collection('revenue_share')
-				.insert({
+			var datum = {
 					entity_id : data._id,
 					approver : {
 						admin : {
 							user_id : null,	//dummy
-							status : true,		//for first time only, then set to false as default
-							comments : ''
-						},
-						approver2 : {
-							user_id : data.network_id,	//dummy
 							status : true,		//for first time only, then set to false as default
 							comments : ''
 						}
@@ -201,7 +199,17 @@ exports.add_channel = function (req, res, next) {
 					date_effective : +new Date,
 					created_at : +new Date,
 					updated_at : +new Date
-				}, update_app_data);
+				};
+			if (err) return next(err);
+			if (data.network_id) {
+				datum.approver.approver2 = {
+					user_id : data.network_id,	//dummy
+					status : false,
+					comments : ''
+				};
+			}
+			mongo.collection('revenue_share')
+				.insert(datum, update_app_data);
 		},
 		update_app_data = function (err) {
 			if (err) return next(err);

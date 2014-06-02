@@ -18,7 +18,6 @@ exports.auth_channel = function (req, res, next) {
 	res.redirect(oauth2_client.generateAuthUrl({
 		state : 'channel',
 		access_type: 'offline',
-		approval_prompt : 'force',
 		scope : [
 			'https://www.googleapis.com/auth/userinfo.email',
 			'https://www.googleapis.com/auth/userinfo.profile',
@@ -44,6 +43,7 @@ exports.auth_youtube_callback = function (req, res, next) {
 				data.items.push({
 					_id : response.items[i].id,
 					access_token : tokens.access_token,
+					refresh_token : tokens.refresh_token,
 					published_at : +new Date(response.items[i].snippet.publishedAt),
 					channel_name : response.items[i].brandingSettings.channel.title,
 					total_views : response.items[i].statistics.viewCount,
@@ -95,6 +95,7 @@ exports.add_channel = function (req, res, next) {
 			'network_id',
 			'channel_name',
 			'access_token',
+			'refresh_token',
 			'published_at',
 			'total_views',
 			'total_comments',
@@ -376,16 +377,31 @@ exports.get_analytics = function (req, res, next) {
 		},
 		get_published_at = function () {
 			mysql.open(config.db_freedom)
-				.query('SELECT published_at, access_token FROM channel WHERE user_id = ? AND _id = ?', [req.user_id, req.params.id], buster_call)
+				.query('SELECT published_at, refresh_token FROM channel WHERE user_id = ? AND _id = ?', [req.user_id, req.params.id], get_access_token)
 				.end();
 		},
-		buster_call = function (err, result) {
+		get_access_token = function (err, result) {
 			if (err)
 				return next(err);
 			if (result.length === 0)
 				return next('Unknown channel');
 			published_at = moment(result[0].published_at).format('YYYY-MM-DD');
-			bearer = 'Bearer ' + result[0].access_token;
+			curl.post
+				.to('accounts.google.com', 443, '/o/oauth2/token')
+				.secured()
+				.send({
+					client_id : config.google_auth.client_id,
+					client_secret : config.google_auth.client_secret,
+					refresh_token : result[0].refresh_token,
+					grant_type : 'refresh_token'
+				})
+				.then(buster_call)
+				.onerror(next);
+		}
+		buster_call = function (status, _data) {
+			if (!done && status !== 200)
+				return res.send(status, _data);
+			bearer = 'Bearer ' + _data.access_token;
 			get_lifetime();
 			get_last_30_days();
 			get_per_source();
@@ -489,9 +505,10 @@ exports.get_analytics = function (req, res, next) {
 		send_response = function (status, _data) {
 			if (!done && status !== 200) {
 				done = true;
-				res.send(status, _data);
+				return res.send(status, _data);
 			}
-			else if (!--total_requests) {
+
+			if (!--total_requests) {
 				data.continents = continents;
 				res.send(data);
 			}

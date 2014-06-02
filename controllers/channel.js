@@ -39,11 +39,11 @@ exports.auth_youtube_callback = function (req, res, next) {
 				i = response.items.length;
 			if (err) return next(err);
 			data.items = [];
-			console.dir(response);
 			while (i--)
 				data.items.push({
 					_id : response.items[i].id,
 					access_token : tokens.access_token,
+					published_at : response.items[i].snippet.publishedAt,
 					channel_name : response.items[i].brandingSettings.channel.title,
 					total_views : response.items[i].statistics.viewCount,
 					total_videos : response.items[i].statistics.videoCount,
@@ -94,6 +94,7 @@ exports.add_channel = function (req, res, next) {
 			'network_id',
 			'channel_name',
 			'access_token',
+			'published_at',
 			'total_views',
 			'total_comments',
 			'total_subscribers',

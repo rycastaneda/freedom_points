@@ -81,7 +81,7 @@ exports.accept_applicant = function (req, res, next) {
 
                     //  if one of the status are false, other approvers haven't approved yet
                     if(approvers[i].status === false){
-                        return res.send(200, {message: "Admin Acceptance successful"});
+                        return res.send(200, {message: "admin"});
                     }
                 }
 
@@ -90,7 +90,7 @@ exports.accept_applicant = function (req, res, next) {
                     .query("UPDATE channel SET partnership_status = 1 where _id = ?",[req.body.id], function(err, result){
                         if(err) next(err);
 
-                        res.send(200,{message: "All approvers verified."});
+                        res.send(200,{message: "all"});
                     })
                     .end();
             });

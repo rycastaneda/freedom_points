@@ -277,6 +277,7 @@ exports.search = function (req, res, next) {
 				.send({
 					part : 'snippet',
 					type : 'video',
+					sort : 'date',
 					channelId : _data.items[0].id,
 					maxResults : 1,
 					fields : 'items(id/videoId)',

@@ -42,16 +42,16 @@ exports.find_applicants = function(req, res, next){
 		next("Unauthorized");
 };
 
-exports.view_applicant = function(req, res, next){
+exports.view_applicant = function (req, res, next) {
 
 };
 
-exports.accept_applicant = function(req, res, next){
+exports.accept_applicant = function (req, res, next) {
     var data = {},
     update = function () {
         mongo.collection('partnership')
             .update(
-                {channel : req.params.id},
+                {channel : req.body.id},
                 {$set : {
                             "approver.admin.status" : false
                         }
@@ -60,7 +60,7 @@ exports.accept_applicant = function(req, res, next){
                 send_response
 			);
     },
-    send_response = function(err, countModif) {
+    send_response = function (err, countModif) {
         if(err) next(err);
 
         if(countModif > 0)
@@ -68,9 +68,9 @@ exports.accept_applicant = function(req, res, next){
         else
 			next("Admin acceptance failed");
     },
-    check_all_approvs = function() {
+    check_all_approvs = function () {
         mongo.collection('partnership')
-            .find({channel: req.params.id})
+            .find({channel: req.body.id})
             .toArray(function(err, result) {
                 if(err) next(err);
 
@@ -81,14 +81,13 @@ exports.accept_applicant = function(req, res, next){
 
                     //  if one of the status are false, other approvers haven't approved yet
                     if(approvers[i].status === false){
-                        res.send(200, {message: "Admin Acceptance successful"});
-                        return;
+                        return res.send(200, {message: "Admin Acceptance successful"});
                     }
                 }
 
                 // all approvers have status  === true, now update SQL database;
                 mysql.open(config.db_freedom)
-                    .query("UPDATE channel SET partnership_status = 1 where _id = ?",[req.params.id], function(err, result){
+                    .query("UPDATE channel SET partnership_status = 1 where _id = ?",[req.body.id], function(err, result){
                         if(err) next(err);
 
                         res.send(200,{message: "All approvers verified."});

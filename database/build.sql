@@ -13,6 +13,7 @@ CREATE TABLE channel(
 	channel_name varchar(256)  not null,
 	channel_username varchar(512)  not null,	/*  from gdata */
 	access_token varchar(128) not null,
+	refresh_token varchar(128) not null,
 	total_views int(11)  not null,
 	total_comments int(11)  not null,
 	total_subscribers int(11) not null,

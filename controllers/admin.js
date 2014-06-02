@@ -53,7 +53,7 @@ exports.accept_applicant = function (req, res, next) {
             .update(
                 {channel : req.body.id},
                 {$set : {
-                            "approver.admin.status" : false
+                            "approver.admin.status" : true
                         }
                 },
                 {},
@@ -97,7 +97,7 @@ exports.accept_applicant = function (req, res, next) {
     };
 
     if(req.is_admin)
-        as_helper.has_scopes(req.signedCookies.access_token, 'admin.view_all', query, next);
+        as_helper.has_scopes(req.signedCookies.access_token, 'admin.view_all', update, next);
     else
 		next("Unauthorized");
 };

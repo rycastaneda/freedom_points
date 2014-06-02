@@ -22,7 +22,7 @@
 			var socket = io.connect(),
 				counter = document.getElementById('master_counter');
 			socket.on('count', function (data) {
-				counter.innerHTML = data;
+				counter.innerHTML = data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 			});
 			socket.emit('count');
 		</script>

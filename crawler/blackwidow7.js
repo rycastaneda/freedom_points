@@ -99,7 +99,7 @@ if (cluster.isMaster) {
 		}
 
 		if (!process.argv[3]) {
-			console.log('2nd paramater : MAX connection per thread is missing. Defaulting to 300');
+			console.log('2nd paramater : MAX handles per thread is missing. Defaulting to 300');
 			process.argv[3] = 200;
 		}
 		else {
@@ -141,7 +141,7 @@ if (cluster.isMaster) {
 			.onerror(console.dir);
 	}());
 } else {
-	setTimeout(function () {
+	(function () {
 		var io = require('socket.io-client'),
 			KEY = 'AIzaSyDqWOahd3OSYfctw5pTTcNjQjjfD3QC-s4',
 			max,
@@ -166,6 +166,7 @@ if (cluster.isMaster) {
 								match
 									.forEach(function (e, p, s) {
 										if (s.indexOf(e) === p) {
+											if (request_count > max) return;
 											return get_channel(e.substring(7, e.length - 3));
 										}
 									});
@@ -202,18 +203,29 @@ if (cluster.isMaster) {
 					})
 					.then(function (status, data) {
 						if (status === 200) {
-							if (data.items[0] && data.items[0].id && !(a.first_video = data.items[0].id.videoId)) return;
-							if (data.items[0] && data.items[0].snippet && !(a.username = data.items[0].snippet.channelTitle)) return;
+							if (data.items[0] && data.items[0].id && !(a.first_video = data.items[0].id.videoId)) {
+								request_count--;
+								return;
+							}
+							if (data.items[0] && data.items[0].snippet && !(a.username = data.items[0].snippet.channelTitle)) {
+								request_count--;
+								return;
+							}
 							return get_scm(a);
 						} else {
 							console.log(status, 'Error getting first video and username of channel', a._id);
+							request_count--;
 						}
 						return;
 					})
-					.onerror(console.dir);
+					.onerror(function (e) {
+						request_count--;
+						console.dir(e);
+					});
 			},
 
 			get_channel = function (a) {
+				if (request_count > max) return;
 				request_count++;
 				return new Request()
 					.to('www.googleapis.com', 443, '/youtube/v3/channels')
@@ -233,21 +245,30 @@ if (cluster.isMaster) {
 									data._id = a;
 									data.scm = null;
 									return get_username(data);
+								} else {
+									request_count--;
 								}
-							};
+							} else {
+								request_count--;
+							}
 						}
-						else
+						else {
 							console.log(status, 'Error on getting channel', a);
+							request_count--;
+						}
 						return;
 					})
-					.onerror(console.dir);
+					.onerror(function (e) {
+						request_count--;
+						console.dir(e);
+					});
 			};
 
 		console.log('Releasing black widow', cluster.worker.id);
 		client = io.connect('http://' + process.env['url']);
 		max = +process.env['max'];
 		process.env['channels'].split(',').forEach(get_channel);
-	}, 0);
+	} ());
 }
 
 cluster.on('exit', function (worker) {

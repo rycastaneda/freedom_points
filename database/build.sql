@@ -64,10 +64,14 @@ CREATE TABLE prospects (
 drop table if exists network;
 CREATE TABLE network (
 	_id int(10) unsigned NOT NULL AUTO_INCREMENT,
-	owner varchar(64) not null,
+	owner_id varchar(64) not null,
 	name varchar(64) not null,
 	description TEXT,
 	tags varchar(255),
-	banner varchar(255)
+	banner varchar(255),
+	created_at bigint(15)  not null,
+	updated_at bigint(15),
+	PRIMARY KEY (_id)
 );
 
+insert into network values(1, 'fd51bda2fcd2f9ef22fbe4214547cce4', 'Ravnetwork', 'This is a description. Promise.', 'tag,tags,tagses', 'http://www.avatecpower.com/images/banner_sale_network.gif', 1401739516480, null);

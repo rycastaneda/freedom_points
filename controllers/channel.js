@@ -18,6 +18,7 @@ exports.auth_channel = function (req, res, next) {
 	res.redirect(oauth2_client.generateAuthUrl({
 		state : 'channel',
 		access_type: 'offline',
+		approval_prompt : 'force',
 		scope : [
 			'https://www.googleapis.com/auth/userinfo.email',
 			'https://www.googleapis.com/auth/userinfo.profile',
@@ -34,29 +35,60 @@ exports.auth_channel = function (req, res, next) {
 
 exports.auth_youtube_callback = function (req, res, next) {
 	var tokens,
-		redirect = function (err, response) {
+		channels,
+		redirect = function (err, result) {
 			var data = {},
-				i = response.items.length;
-			if (err) return next(err);
+				i;
+
+			if (err)
+				return next(err);
+
+			result = result.map(function (a) {
+				return a._id;
+			});
+
+			channels = channels.filter(function (a) {
+				return !~result.indexOf(a.id);
+			});
+
+			i = channels.length;
+
 			data.items = [];
+
 			while (i--)
 				data.items.push({
-					_id : response.items[i].id,
+					_id : channels[i].id,
 					access_token : tokens.access_token,
 					refresh_token : tokens.refresh_token,
-					published_at : +new Date(response.items[i].snippet.publishedAt),
-					channel_name : response.items[i].brandingSettings.channel.title,
-					total_views : response.items[i].statistics.viewCount,
-					total_videos : response.items[i].statistics.videoCount,
-					total_comments : response.items[i].statistics.commentCount,
-					total_subscribers : response.items[i].statistics.subscriberCount,
-					overall_goodstanding : response.items[i].auditDetails.overallGoodStanding,
-					contentidclaims_goodstanding : response.items[i].auditDetails.contentIdClaimsGoodStanding,
-					copyrightstrikes_goodstanding : response.items[i].auditDetails.copyrightStrikesGoodStanding,
-					communityguidelines_goodstanding : response.items[i].auditDetails.communityGuidelinesGoodStanding
+					published_at : +new Date(channels[i].snippet.publishedAt),
+					channel_name : channels[i].brandingSettings.channel.title,
+					total_views : channels[i].statistics.viewCount,
+					total_videos : channels[i].statistics.videoCount,
+					total_comments : channels[i].statistics.commentCount,
+					total_subscribers : channels[i].statistics.subscriberCount,
+					overall_goodstanding : channels[i].auditDetails.overallGoodStanding,
+					contentidclaims_goodstanding : channels[i].auditDetails.contentIdClaimsGoodStanding,
+					copyrightstrikes_goodstanding : channels[i].auditDetails.copyrightStrikesGoodStanding,
+					communityguidelines_goodstanding : channels[i].auditDetails.communityGuidelinesGoodStanding
 				});
+
 			res.cookie('channels', JSON.stringify(data));
 			res.redirect(config.frontend_server_url + '/channels/add');
+
+		},
+		check_db = function (err, response) {
+			if (err)
+				return next(err);
+			if (response.items.length === 0)
+				return next('The user has no channel');
+
+			channels = response.items;
+
+			mysql.open(config.db_freedom)
+				.query('SELECT _id FROM channel WHERE _id IN (?)', response.items.map(function (a) {
+					return a.id;
+				}), redirect)
+				.end();
 		},
 		get_client = function(err, client) {
 			if (err) return next(err);
@@ -64,7 +96,7 @@ exports.auth_youtube_callback = function (req, res, next) {
 					part : 'id, snippet, auditDetails, brandingSettings, contentDetails, invideoPromotion, statistics, status, topicDetails',
 					mine : true
 				})
-				.execute(redirect);
+				.execute(check_db);
 		},
 		get_tokens = function(err, _tokens) {
 			if (err) return next(err);
@@ -120,23 +152,40 @@ exports.add_channel = function (req, res, next) {
 					fields : 'items(snippet/channelTitle)',
 					key : config.google_api_key
 				})
-				.then(insert_channel)
+				.then(get_network_name)
 				.then(next);
 		},
-		insert_channel = function (status, json) {
-			if (status === 200) {
-				data.channel_username = json.items[0]
-					? json.items[0].snippet.channelTitle
-					: data._id.substring(2);
+		get_network_name = function (status, json) {
+			if (status !== 200)
+				return next('Failed  to get username');
 
-				// if network_id exists, go get the network_name the insert to database
+			data.channel_username = json.items[0]
+				? json.items[0].snippet.channelTitle
+				: data._id.substring(2);
 
+			if (data.network_id) {
 				mysql.open(config.db_freedom)
-					.query('INSERT into channel SET ?', data, insert_stat)
+					.query('SELECT name FROM network WHERE _id = ?', data.network_id, insert_channel)
 					.end();
-			} else {
-				next('Failed  to get username');
 			}
+			else {
+				insert_channel();
+			}
+		}
+		insert_channel = function (err, result) {
+			if (err)
+				return next(err);
+
+			if (data.network_id) {
+				if (result.length === 0)
+					return next('Network not found');
+
+				data.network_name = result[0].name;
+			}
+
+			mysql.open(config.db_freedom)
+				.query('INSERT into channel SET ?', data, insert_stat)
+				.end();
 		},
 		insert_stat = function (err, result) {
 			if (err && err.code === 'ER_DUP_ENTRY')

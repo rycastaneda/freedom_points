@@ -10,28 +10,42 @@ var config = require(__dirname + '/../config/config'),
 //based from each feature from the dashboard, eto yung mga nasa overview tab
 exports.get_channel_earnings = function(req,res,next) {
 	var data = util.get_data([
-			'access_token',
 			'report_id'
-		], [], req.query);
+		], [], req.query),
+		scopes = 'payout.view',
+		get_userinfo = function(status, _data) {
+			if (status !== 200)
+				return next(_data);
+
+			
+		};
+
+
+
+
 
 
 	if(typeof data === 'string')
 		return next(data);
+
+	req.query.user_id && scopes = ('payout.view, admin.view_all');
+	as_helper.has_scopes(req.access_token, scopes, get_userinfo, next);
+
 };
 
-exports.getNetworkEarnings = function(req,res,next) {
+exports.net_networks_earnings = function(req,res,next) {
 	var data = util.chk_rqd(['user_id','report_id'], req.body, next);
 
 
 };
 
-exports.getRecruiterEarnings = function(req,res,next) {
+exports.get_recruiter_earnings = function(req,res,next) {
 	var data = util.chk_rqd(['user_id','report_id'], req.body, next);
 
 
 };
 
-exports.getPaymentSchedule = function(req,res,next) {
+exports.get_payment_schedule = function(req,res,next) {
 	var data = util.get_data([
 			'access_token'
 		], [], req.query);

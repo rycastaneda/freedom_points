@@ -21,6 +21,7 @@ module.exports = function (router, logger) {
 	router.get('/channel/search/:key', channel.search);
 	router.get('/channels', channel.get_channels);
 	router.get('/channel/add', channel.auth_channel);
+	router.get('/channel/:id/analytics', channel.get_analytics);
 	router.post('/channel/add', channel.add_channel);
 
 	// admin

@@ -17,7 +17,8 @@
     "mongoskin": "^1.4.1",
     "mysql": "^2.2.0",
     "socket.io": "~0.9.16",
-    "socket.io-client": "^0.9.16"
+    "socket.io-client": "^0.9.16",
+    "moment": "^2.6.0"
   },
   "scripts": {
     "start": "nodemon server.js",

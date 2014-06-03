@@ -13,6 +13,7 @@ CREATE TABLE channel(
 	channel_name varchar(256)  not null,
 	channel_username varchar(512)  not null,	/*  from gdata */
 	access_token varchar(128) not null,
+	refresh_token varchar(128) not null,
 	total_views int(11)  not null,
 	total_comments int(11)  not null,
 	total_subscribers int(11) not null,
@@ -24,6 +25,7 @@ CREATE TABLE channel(
 	copyrightstrikes_goodstanding boolean not null,
 	contentidclaims_goodstanding boolean not null,
 	date_approved int(11) default null,
+	published_at bigint(15) not null,
 	created_at bigint(15)  not null,
 	updated_at bigint(15)
 );

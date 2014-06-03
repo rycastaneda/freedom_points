@@ -42,10 +42,6 @@ exports.find_applicants = function(req, res, next){
 		next("Unauthorized");
 };
 
-exports.view_applicant = function (req, res, next) {
-
-};
-
 exports.accept_applicant = function (req, res, next) {
     var data = {},
     update = function () {

@@ -214,7 +214,7 @@ exports.add_channel = function (req, res, next) {
 					channel : data._id,
 					approver : {
 						admin : {
-							user_id : null,	//dummy
+							user_id : null,
 							status : false,
 							comments : ''
 						}
@@ -225,7 +225,7 @@ exports.add_channel = function (req, res, next) {
 			if (err) return next(err);
 			if (data.network_id) {
 				datum.approver.approver2 = {
-					user_id : data.network_id,	//dummy
+					user_id : data.network_id,
 					status : false,
 					comments : ''
 				};
@@ -238,7 +238,7 @@ exports.add_channel = function (req, res, next) {
 					entity_id : data._id,
 					approver : {
 						admin : {
-							user_id : null,	//dummy
+							user_id : null,
 							status : true,		//for first time only, then set to false as default
 							comments : ''
 						}
@@ -252,7 +252,7 @@ exports.add_channel = function (req, res, next) {
 			if (err) return next(err);
 			if (data.network_id) {
 				datum.approver.approver2 = {
-					user_id : data.network_id,	//dummy
+					user_id : data.network_id,
 					status : false,
 					comments : ''
 				};

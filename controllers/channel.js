@@ -236,6 +236,7 @@ exports.add_channel = function (req, res, next) {
 		insert_revshare = function(err,result) {
 			var datum = {
 					entity_id : data._id,
+					approved : true,			//for the first time only, this flag is for easy access in the earnings
 					approver : {
 						admin : {
 							user_id : null,

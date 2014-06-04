@@ -15,16 +15,16 @@ exports.get_channel_earnings = function(req,res,next) {
 		], [], req.query),
 		scopes = 'payout.view',
 		done = function(err, _data) {
-			if(err) return next(err);
+			if (err) return next(err);
 
 			res.send(_data);
 
 		},
 		get_earnings = function(err, _data) {
 			var report_ids = [];
-			if(err) return next(err);
+			if (err) return next(err);
 
-			if(!_data.user_data[config.app_id+'_data'].channels_owned) return res.send({});
+			if (!_data.user_data[config.app_id+'_data'].channels_owned) return res.send({});
 			
 			(req.query.report_id.split(',')).forEach(function(ri) {
 				if(ri.trim() !== '')

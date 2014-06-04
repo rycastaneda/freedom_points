@@ -10,14 +10,38 @@ var config = require(__dirname + '/../config/config'),
 //based from each feature from the dashboard, eto yung mga nasa overview tab
 exports.get_channel_earnings = function(req,res,next) {
 	var data = util.get_data([
+			'access_token',
 			'report_id'
 		], [], req.query),
 		scopes = 'payout.view',
-		get_userinfo = function(status, _data) {
-			if (status !== 200)
-				return next(_data);
+		done = function(err, _data) {
+			if(err) return next(err);
 
+			res.send(_data);
+
+		},
+		get_earnings = function(err, _data) {
+			var report_ids = [];
+			if(err) return next(err);
+
+			if(!_data.user_data[config.app_id+'_data'].channels_owned) return res.send({});
 			
+			(req.query.report_id.split(',')).forEach(function(ri) {
+				if(ri.trim() !== '')
+					report_ids.push(ri.trim());
+			});
+
+			mysql.open(config.db_earnings)
+				.query('SELECT * from summed_earnings WHERE report_id in (?) and user_channel_id in (?)', [report_ids, _data.user_data[config.app_id+'_data'].channels_owned], done)
+				.end();
+		},
+		get_userinfo = function(status, _data) {
+			if (status !== 200) return next(_data);
+			
+			if (req.query.user_id)
+				as_helper.get_info({access_token:req.query.access_token, user_id:req.query.user_id}, get_earnings);
+			else 
+				as_helper.get_info({access_token:req.query.access_token, self:true}, get_earnings);
 		};
 
 
@@ -27,9 +51,9 @@ exports.get_channel_earnings = function(req,res,next) {
 
 	if(typeof data === 'string')
 		return next(data);
-
-	req.query.user_id && scopes = ('payout.view, admin.view_all');
-	as_helper.has_scopes(req.access_token, scopes, get_userinfo, next);
+	
+	req.query.user_id && (scopes = 'payout.view, admin.view_all');
+	as_helper.has_scopes(req.query.access_token, scopes, get_userinfo, next);
 
 };
 
@@ -63,16 +87,15 @@ exports.get_range_of_payments = function(req,res,next) {
 			res.send(data);
 			return;
 		},
-		get_range = function(err,dt) {
+		get_range = function(err, _data) {
 			var dte;
 			if (err)
 				return next(err);
 			mysql.open(config.db_earnings);
-			if (!dt)
+			if (!_data)
 					mysql.query('SELECT id, start_date, end_date date from report group by id order by id desc;',done).end();
 			else {
-					dte = new Date(dt.user_data.created_at);
-					console.log(dte);
+					dte = new Date(_data.user_data.created_at);
 					mysql.query('SELECT id, start_date, end_date date from report where DATE_FORMAT(date(start_date),"%Y-%m") >= "'+dte.getFullYear()+'-'+('0'+(dte.getMonth()+1)).slice(-2)+'" group by id order by id desc;',done).end();
 			}
 		};

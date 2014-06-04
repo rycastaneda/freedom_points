@@ -26,8 +26,8 @@ exports.get_channel_earnings = function(req,res,next) {
 
 			if (!_data.user_data[config.app_id+'_data'].channels_owned) return res.send({});
 			
-			(req.query.report_id.split(',')).forEach(function(ri) {
-				if(ri.trim() !== '')
+			req.query.report_id.split(',').forEach(function(ri) {
+				if (ri.trim() !== '')
 					report_ids.push(ri.trim());
 			});
 
@@ -35,7 +35,7 @@ exports.get_channel_earnings = function(req,res,next) {
 				.query('SELECT * from summed_earnings WHERE report_id in (?) and user_channel_id in (?)', [report_ids, _data.user_data[config.app_id+'_data'].channels_owned], done)
 				.end();
 		},
-		get_userinfo = function(status, _data) {
+		get_user_info = function(status, _data) {
 			if (status !== 200) return next(_data);
 			
 			if (req.query.user_id)
@@ -49,7 +49,7 @@ exports.get_channel_earnings = function(req,res,next) {
 
 
 
-	if(typeof data === 'string')
+	if (typeof data === 'string')
 		return next(data);
 	
 	req.query.user_id && (scopes = 'payout.view, admin.view_all');
@@ -136,7 +136,7 @@ exports.generateSummedPayouts = function(req,res,next) {
 						video_count : result[i].video_count
 					}
 					mysql.query('INSERT into summed_earnings SET ?',rs, function(err,rs){
-						if(err) {
+						if (err) {
 							logger.log('error', err.message || err);
 							return;
 						}
@@ -148,7 +148,7 @@ exports.generateSummedPayouts = function(req,res,next) {
 			}).end();
 		};
 
-	if(typeof data === 'string')
+	if (typeof data === 'string')
 		return next(data);
 
 	get_earnings(data.report_id);

@@ -2,7 +2,8 @@ var user = require(__dirname + '/../controllers/user'),
 	channel = require(__dirname + '/../controllers/channel'),
 	prospect = require(__dirname + '/../controllers/prospect'),
 	admin = require(__dirname + '/../controllers/admin'),
-	earnings = require(__dirname + '/../controllers/earnings');
+	earnings = require(__dirname + '/../controllers/earnings'),
+	network = require(__dirname + '/../controllers/network');
 
 module.exports = function (router, logger) {
 
@@ -40,6 +41,8 @@ module.exports = function (router, logger) {
 	router.put('/prospect/update', prospect.update_prospect);
 	router.delete('/prospect/delete', prospect.delete_prospects);
 
+	//network related routes
+	router.get('/networks', network.get_networks);
 
 
 
@@ -56,8 +59,16 @@ module.exports = function (router, logger) {
 
 	router.use(function (err, req, res, next) {
 		console.log('---error---');
-		console.log(err);
-
+		if (typeof err === 'object') {
+			if (err.message) {
+				console.log('\nMessage: ' + err.message)
+			}
+			if (err.stack) {
+				console.log('\nStacktrace:')
+				console.log('====================')
+				console.dir(err.stack);
+			}
+		}
 		logger.log('error', err.message || err);
 		return res.send(400, {message : err.message || err});
 	});

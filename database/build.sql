@@ -9,6 +9,8 @@ CREATE TABLE channel(
 	linked_cms enum('Manage', 'Affiliated') default null,
 	network_id varchar(64),
 	network_name varchar(256) ,
+	recruiter varchar(64) default null,
+	recruited_date bigint(15) default null,
 	partnership_status boolean  default false,
 	channel_name varchar(256)  not null,
 	channel_username varchar(512)  not null,	/*  from gdata */
@@ -61,3 +63,17 @@ CREATE TABLE prospects (
 	PRIMARY KEY (_id)
 );
 
+drop table if exists network;
+CREATE TABLE network (
+	_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+	owner_id varchar(64) not null,
+	name varchar(64) not null,
+	description TEXT,
+	tags varchar(255),
+	banner varchar(255),
+	created_at bigint(15)  not null,
+	updated_at bigint(15),
+	PRIMARY KEY (_id)
+);
+
+insert into network values(1, 'fd51bda2fcd2f9ef22fbe4214547cce4', 'Ravnetwork', 'This is a description. Promise.', 'tag,tags,tagses', 'http://www.avatecpower.com/images/banner_sale_network.gif', 1401739516480, null);

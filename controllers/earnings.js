@@ -27,7 +27,7 @@ exports.get_channel_earnings = function (req, res, next) {
 				};
 			}
 
-			res.send({report:report_data,channels:channel_data});
+			res.send({report:report_data, channels:channel_data});
 
 		},
 		get_report_data = function (err, _data) {
@@ -88,7 +88,7 @@ exports.get_payment_schedule = function (req, res, next) {
 
 exports.get_range_of_payments = function (req, res, next) {
 	var data = {},
-		done = function (err,data) {
+		done = function (err, data) {
 			if (err)
 				return next(err);
 			res.send(data);
@@ -123,7 +123,7 @@ exports.get_range_of_payments = function (req, res, next) {
 };
 
 
-exports.generateSummedPayouts = function (req, res, next) {
+exports.generate_summed_payouts = function (req, res, next) {
 	//check if we have admin scopes
 	var data = util.get_data([
 			'report_id'
@@ -146,7 +146,7 @@ exports.generateSummedPayouts = function (req, res, next) {
 						channel_display_name : result[i].channel_display_name,
 						video_count : result[i].video_count
 					}
-					mysql.query('INSERT into summed_earnings SET ?',rs, function (err,rs){
+					mysql.query('INSERT into summed_earnings SET ?', rs, function (err, rs){
 						if (err) {
 							logger.log('error', err.message || err);
 							return;
@@ -154,7 +154,7 @@ exports.generateSummedPayouts = function (req, res, next) {
 						console.log(rs);
 					});
 				}
-				res.send({message:"Finished processing summed earnings for report_id:" + report_id});
+				res.send({message : "Finished processing summed earnings for report_id:" + report_id});
 				mysql.end();
 			}).end();
 		};

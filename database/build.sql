@@ -9,6 +9,8 @@ CREATE TABLE channel(
 	linked_cms enum('Manage', 'Affiliated') default null,
 	network_id varchar(64),
 	network_name varchar(256) ,
+	recruiter varchar(64) default null,
+	recruited_date bigint(15) default null,
 	partnership_status boolean  default false,
 	channel_name varchar(256)  not null,
 	channel_username varchar(512)  not null,	/*  from gdata */

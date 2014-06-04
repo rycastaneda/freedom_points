@@ -253,7 +253,7 @@ exports.add_channel = function (req, res, next) {
 			if (data.network_id) {
 				datum.approver.approver2 = {
 					user_id : data.network_id,
-					status : false,
+					status : true,				//for the first time true
 					comments : ''
 				};
 			}
@@ -289,6 +289,17 @@ exports.add_channel = function (req, res, next) {
 	data.last30_days = data.total_videos;
 	data.created_at = +new Date;
 	data.network_name = 'network name'; // should be from db
+	
+
+	/* *********************** RAVEN, take note of this **********************
+		kung may nagrecruit or nagreffer dun sa channel na iaad, pakilagay yung user_id dun sa recruter na column (see build.sql channels table)
+		pero kung yung nag recruit or nagreffer sa channel ay under ng isang network, wala kang ilalagay.. gets..? tanung ka na lang sakin if malabo
+	
+	data.recruiter = ''; 
+	data.recruited_date = +new Date; 
+	
+	*/
+
 	data.overall_goodstanding = data.overall_goodstanding === 'true' ? 1 : 0;
 	data.communityguidelines_goodstanding = data.communityguidelines_goodstanding === 'true' ? 1 : 0;
 	data.copyrightstrikes_goodstanding = data.copyrightstrikes_goodstanding === 'true' ? 1 : 0;

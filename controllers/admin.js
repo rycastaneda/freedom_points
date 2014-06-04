@@ -25,7 +25,7 @@ exports.find_applicants = function(req, res, next){
             }
 
             mysql.open(config.db_freedom)
-                .query("SELECT _id, channel_name, last30_days, channel_username from channel where partnership_status = 0 LIMIT ? , ?;",[page, size],function(err, result){
+                .query("SELECT _id, channel_name, last30_days, channel_username from channel where partnership_status = 0 LIMIT ? , ?",[page, size],function(err, result){
                     if(err) next(err);
 
                     res.send(200, result);

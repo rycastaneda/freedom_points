@@ -4,7 +4,8 @@ var config = require(__dirname + '/../config/config'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),
     qs = require('querystring'),
     http = require('http'),
-	mysql = require(__dirname + '/../lib/mysql');
+	mysql = require(__dirname + '/../lib/mysql'),
+	mongo = require(__dirname + '/../lib/mongoskin');
 
 //get each earnings from the database 'earnings_report'
 //based from each feature from the dashboard, eto yung mga nasa overview tab
@@ -13,29 +14,63 @@ exports.get_channel_earnings = function (req, res, next) {
 			'report_id'
 		], [], req.query),
 		scopes = 'payout.view',
+		c_counter = 0,
 		report_ids = [],
 		report_data = {},
 		channel_data = {},
-		done = function (err, _data) {
+		fetched_rev_share = function (channel, rev_share) {
+			c_counter++;
+
+			channel.revenue_share = rev_share;
+
+			report_data[channel.report_id].earnings.push(channel);
+
+			if (c_counter === channel_data.length) {
+				if (res)
+					return res.send(report_data);
+
+				return report_data;
+			}
+		},
+		loop_to_channels = function (err, _data) {
+			var selectables = {date_effective : 1, revenue_share : 1, entity_id : 1};
+
 			if (err) return next(err);
 
-
-			for(var i in _data) {
+			for ( var i in _data) {
 				report_data[_data[i].id] = {
 					start_date : _data[i].start_date, 
-					end_date : _data[i].end_date
+					end_date : _data[i].end_date,
+					earnings : []
 				};
 			}
 
-			res.send({report:report_data, channels:channel_data});
-
+			for ( var j in channel_data) {
+				( function( channel, index ) {
+					mongo.collection('revenue_share')
+	           	 		.find({entity_id: channel.user_channel_id, approved: true, date_effective: {$lte: new Date(report_data[channel.report_id].end_date).getTime()} }, selectables)
+	           	 		.sort({date_effective : -1})
+	           	 		.toArray(function (err, _data) {
+	           	 			console.log('-------------');
+	           	 			console.log(channel);
+		           	 		if (err) {
+		           	 			console.log(err);
+		           	 			return fetched_rev_share(channel, null);
+		           	 		}
+		           	 		if (_data.length === 0)
+		           	 			return fetched_rev_share(channel, null);
+		           	 		
+		           	 		return fetched_rev_share(channel, _data[0]);
+	           	 		});
+				})(channel_data[j], j);
+			}
 		},
 		get_report_data = function (err, _data) {
 			if (err) return next(err);
 
 			channel_data = _data;
 			mysql.open(config.db_earnings)
-				.query('SELECT id, start_date, end_date from report where id in (?) group by id order by start_date desc', [report_ids], done)
+				.query('SELECT id, start_date, end_date from report where id in (?) group by id order by start_date desc', [report_ids], loop_to_channels)
 				.end();
 
 		},

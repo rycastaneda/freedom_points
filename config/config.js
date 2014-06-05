@@ -36,13 +36,21 @@ var path = require('path'),
 			db_freedom : {
 				host : 'localhost',
 				user : 'root',
+<<<<<<< HEAD
 				password : 'iamthejoker',
+=======
+				password : 'pepermint',
+>>>>>>> origin/master
 				database : 'freedom'
 			},
 			db_earnings : {
 				host : 'localhost',
 				user : 'root',
+<<<<<<< HEAD
 				password : 'iamthejoker',
+=======
+				password : 'pepermint',
+>>>>>>> origin/master
 				database : 'earnings_report'
 			},
 			db_mongo : {

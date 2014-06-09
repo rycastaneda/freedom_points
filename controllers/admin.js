@@ -95,7 +95,7 @@ exports.accept_applicant = function (req, res, next) {
     };
 
     if (req.is_admin)
-        as_helper.has_scopes(req.signedCookies.access_token, 'admin.view_all', update, next);
+        as_helper.has_scopes(req.signedCookies.access_token, 'admin.add_all', update, next);
     else
 		next("Unauthorized");
 };

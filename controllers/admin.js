@@ -71,17 +71,17 @@ exports.accept_applicant = function (req, res, next) {
                 approvers = result[0].approver;
 
                 // check if all status are true
-                for (i in approvers){
+                for (i in approvers) {
 
                     //  if one of the status are false, other approvers haven't approved yet
-                    if (!approvers[i].status){
+                    if (!approvers[i].status) {
                         return res.send(200, {message: 'admin'});
                     }
                 }
 
                 // all approvers have status  === true, now update SQL database;
                 mysql.open(config.db_freedom)
-                    .query('UPDATE channel SET partnership_status = 1 where _id = ?', [req.body.id], function (err, result){
+                    .query('UPDATE channel SET partnership_status = 1 where _id = ?', [req.body.id], function (err, result) {
                         if (err) return next(err);
 
                         res.send(200, {message: "all"});

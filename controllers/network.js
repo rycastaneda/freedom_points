@@ -18,4 +18,3 @@ exports.get_networks = function (req, res, next) {
 		.query('SELECT _id, name FROM network', send_response)
 		.end();
 };
-

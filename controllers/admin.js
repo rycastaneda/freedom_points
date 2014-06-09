@@ -31,7 +31,7 @@ exports.find_applicants = function(req, res, next){
 
             mysql.open(config.db_freedom)
                 .query(queryApplicants, [page, size], function (err, result) {
-                    if (err) next(err);
+                    if (err) return next(err);
 
                     res.send(200, result);
                 })
@@ -59,7 +59,7 @@ exports.accept_applicant = function (req, res, next) {
 			);
     },
     send_response = function (err, countModif) {
-        if(err) next(err);
+        if(err) return next(err);
 
         if(countModif > 0)
             check_all_approvs();
@@ -70,7 +70,7 @@ exports.accept_applicant = function (req, res, next) {
         mongo.collection('partnership')
             .find({channel: req.body.id})
             .toArray(function (err, result) {
-                if (err) next(err);
+                if (err) return next(err);
 
                 var approvers = result[0].approver;
 
@@ -86,7 +86,7 @@ exports.accept_applicant = function (req, res, next) {
                 // all approvers have status  === true, now update SQL database;
                 mysql.open(config.db_freedom)
                     .query("UPDATE channel SET partnership_status = 1 where _id = ?", [req.body.id], function (err, result){
-                        if (err) next(err);
+                        if (err) return next(err);
 
                         res.send(200, {message: "all"});
                     })

@@ -9,25 +9,19 @@ exports.find_applicants = function(req, res, next){
         stat,
         page = 1,
         size = 10,
-		queryApplicants = "SELECT _id, user_id, linked_cms, channel_username, channel_name, network_id, \
+		queryApplicants = 'SELECT _id, user_id, linked_cms, channel_username, channel_name, network_id, \
 						network_name, last30_days, total_views, total_comments, total_subscribers, \
 						overall_goodstanding, created_at FROM channel WHERE partnership_status = 0 \
-						ORDER BY created_at DESC LIMIT ?, ?;",
+						ORDER BY created_at DESC LIMIT ?, ?;',
         query = function () {
 
             if (req.query.page && !isNaN(req.query.page)) {
-                page = req.query.page;;
+                page = req.query.page;
             }
 
 			page = (page - 1) * 10;
 
-            if (req.query.page && !isNaN(req.query.size)) {
-                size = parseInt(req.query.size,10);
-
-                if (size >= 100) {
-                    size = 100;
-                }
-            }
+			size = req.query.size >= 100 ? 100 : +req.query.size;
 
             mysql.open(config.db_freedom)
                 .query(queryApplicants, [page, size], function (err, result) {
@@ -41,7 +35,7 @@ exports.find_applicants = function(req, res, next){
     if (req.is_admin)
         as_helper.has_scopes(req.access_token, 'admin.view_all', query, next);
     else
-		next("Unauthorized");
+		return next('Unauthorized');
 };
 
 exports.accept_applicant = function (req, res, next) {
@@ -53,7 +47,7 @@ exports.accept_applicant = function (req, res, next) {
             .update(
                 {channel : req.body.id},
                 {$set : {
-                            "approver.admin.status" : true
+                            'approver.admin.status' : true
                         }
                 },
                 {},
@@ -66,7 +60,7 @@ exports.accept_applicant = function (req, res, next) {
         if (countModif > 0)
             check_all_approvs();
         else
-			next("Admin acceptance failed");
+			return next('Admin acceptance failed');
     },
     check_all_approvs = function () {
         mongo.collection('partnership')
@@ -77,17 +71,17 @@ exports.accept_applicant = function (req, res, next) {
                 approvers = result[0].approver;
 
                 // check if all status are true
-                for (in approvers){
+                for (i in approvers){
 
                     //  if one of the status are false, other approvers haven't approved yet
                     if (!approvers[i].status){
-                        return res.send(200, {message: "admin"});
+                        return res.send(200, {message: 'admin'});
                     }
                 }
 
                 // all approvers have status  === true, now update SQL database;
                 mysql.open(config.db_freedom)
-                    .query("UPDATE channel SET partnership_status = 1 where _id = ?", [req.body.id], function (err, result){
+                    .query('UPDATE channel SET partnership_status = 1 where _id = ?', [req.body.id], function (err, result){
                         if (err) return next(err);
 
                         res.send(200, {message: "all"});
@@ -99,5 +93,5 @@ exports.accept_applicant = function (req, res, next) {
     if (req.is_admin)
         as_helper.has_scopes(req.access_token, 'admin.add_all', update, next);
     else
-		next("Unauthorized");
+		return next('Unauthorized');
 };

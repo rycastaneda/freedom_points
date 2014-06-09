@@ -9,10 +9,10 @@ exports.find_applicants = function(req, res, next){
         stat,
         page = 1,
         size = 10,
-		queryApplicants = "SELECT _id, user_id, linked_cms, channel_username, channel_name, network_id, " +
-						"network_name, last30_days, total_views, total_comments, total_subscribers, " +
-						"overall_goodstanding, created_at FROM channel WHERE partnership_status = 0 "+
-						"ORDER BY created_at DESC LIMIT ?, ?;",
+		queryApplicants = "SELECT _id, user_id, linked_cms, channel_username, channel_name, network_id, \
+						network_name, last30_days, total_views, total_comments, total_subscribers, \
+						overall_goodstanding, created_at FROM channel WHERE partnership_status = 0 \
+						ORDER BY created_at DESC LIMIT ?, ?;",
         query = function () {
 
             if (req.query.page && !isNaN(req.query.page)) {
@@ -39,13 +39,15 @@ exports.find_applicants = function(req, res, next){
 	}
 
     if (req.is_admin)
-        as_helper.has_scopes(req.signedCookies.access_token, 'admin.view_all', query, next);
+        as_helper.has_scopes(req.access_token, 'admin.view_all', query, next);
     else
 		next("Unauthorized");
 };
 
 exports.accept_applicant = function (req, res, next) {
     var data = {},
+	approvers,
+	i,
     update = function () {
         mongo.collection('partnership')
             .update(
@@ -59,9 +61,9 @@ exports.accept_applicant = function (req, res, next) {
 			);
     },
     send_response = function (err, countModif) {
-        if(err) return next(err);
+        if (err) return next(err);
 
-        if(countModif > 0)
+        if (countModif > 0)
             check_all_approvs();
         else
 			next("Admin acceptance failed");
@@ -72,13 +74,13 @@ exports.accept_applicant = function (req, res, next) {
             .toArray(function (err, result) {
                 if (err) return next(err);
 
-                var approvers = result[0].approver;
+                approvers = result[0].approver;
 
                 // check if all status are true
-                for (var i in approvers){
+                for (in approvers){
 
                     //  if one of the status are false, other approvers haven't approved yet
-                    if (approvers[i].status === false){
+                    if (!approvers[i].status){
                         return res.send(200, {message: "admin"});
                     }
                 }
@@ -95,7 +97,7 @@ exports.accept_applicant = function (req, res, next) {
     };
 
     if (req.is_admin)
-        as_helper.has_scopes(req.signedCookies.access_token, 'admin.add_all', update, next);
+        as_helper.has_scopes(req.access_token, 'admin.add_all', update, next);
     else
 		next("Unauthorized");
 };

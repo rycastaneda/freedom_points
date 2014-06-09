@@ -81,7 +81,7 @@ exports.accept_applicant = function (req, res, next) {
 
                 // all approvers have status  === true, now update SQL database;
                 mysql.open(config.db_freedom)
-                    .query('UPDATE channel SET partnership_status = 1 where _id = ?', [req.body.id], function (err, result) {
+                    .query('UPDATE channel SET partnership_status = 1, updated_at = ? where _id = ?', [+new Date, req.body.id], function (err, result) {
                         if (err) return next(err);
 
                         res.send(200, {message: "all"});

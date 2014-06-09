@@ -69,6 +69,7 @@ Directory Structure
 Coding conventions
 ---------------------
 
+  * single quotes on strings
   * snake case on function names and variables
   * forget that global variables exist and how to make them
   * use `var` once per function scope, declare all used variables at the same time

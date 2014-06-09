@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-Don't read me.
-Test
-=======
 Freedom! Node Back-end
 ====================
 
@@ -96,4 +92,3 @@ Reminders
   * Node.js uses non-blocking I/O, make sure to use `return` to end the function right away.
   * In Javascript, functions are first-class objects, thus don't be shy to have more than usual.
   * Use controlller's function as the main scope
->>>>>>> origin/master

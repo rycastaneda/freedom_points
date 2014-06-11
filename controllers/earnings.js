@@ -26,7 +26,6 @@ exports.get_channel_earnings = function (req, res, next) {
 			if (c_counter === channel_data.length) {
 				if (res)
 					return res.send(report_data);
-
 				return report_data;
 			}
 		},
@@ -73,8 +72,8 @@ exports.get_channel_earnings = function (req, res, next) {
 		get_earnings = function (err, _data) {
 			if (err) return next(err);
 
-			if (!_data.user_data[config.app_id+'_data'].channels_owned) return res.send({});
-			
+			if(!_data.user_data[config.app_id+'_data'].channels_owned) return res.send({});
+
 			req.query.report_id.split(',').forEach(function (ri) {
 				if (ri.trim() !== '')
 					report_ids.push(ri.trim());
@@ -86,10 +85,10 @@ exports.get_channel_earnings = function (req, res, next) {
 		},
 		get_user_info = function (status, _data) {
 			if (status !== 200) return next(_data);
-			
+
 			if (req.query.user_id)
 				as_helper.get_info({access_token:req.access_token, user_id:req.query.user_id}, get_earnings);
-			else 
+			else
 				as_helper.get_info({access_token:req.access_token, self:true}, get_earnings);
 		};
 
@@ -109,11 +108,12 @@ exports.get_channel_earnings = function (req, res, next) {
 };
 
 exports.net_networks_earnings = function (req, res, next) {
-	
+
 
 };
 
 exports.get_recruiter_earnings = function (req, res ,next) {
+
 	var data = util.get_data([
 			'report_id'
 		], [], req.query),
@@ -127,10 +127,6 @@ exports.get_recruiter_earnings = function (req, res ,next) {
 
 
 		};
-
-
-
-
 
 	if (typeof data === 'string')
 		return next(data);
@@ -177,7 +173,7 @@ exports.get_range_of_payments = function (req, res, next) {
 		get_range();
 	else if (req.query.user_id)
 		as_helper.get_info({access_token:req.access_token, user_id:req.query.user_id}, get_range);
-	else 
+	else
 		as_helper.get_info({access_token:req.access_token, self:true}, get_range);
 
 };

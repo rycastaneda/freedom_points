@@ -69,20 +69,47 @@ Directory Structure
 Coding conventions
 ---------------------
 
+  * single quotes on strings
+  * use `===` for checking similarities
   * snake case on function names and variables
   * forget that global variables exist and how to make them
   * use `var` once per function scope, declare all used variables at the same time
   * `var` should be the first instruction after declaring a `function`
   * use tab indention, don't alter indentions, please.
   * examine available libraries and helpers
-  * space after comma and reserved words
+  * space after comma, reserved words and operators. observe spaces on the following:
+
+	<!-- language:console -->
+
+		if () {...
+		while () {...
+		for () {...
+		function () {...
+		1 + 1
+		[1, 2, 3]
+		temp = 1
+		{property : 'value'}
   * make use of
-	`req.access_token`
-	`req.user`
-	`req.user_id`
-	`req.user_data`
-	`req.is_admin`
-	on creating a controller function
+
+		req.access_token
+		req.user
+		req.user_id
+		req.user_data
+		req.is_admin
+	on creating a controller function.
+
+  * remove brackets on control flows with a one-liner instruction
+
+		// if instruction not too long (about 30chars), make it one-liner
+			if (temp === 1) return {hi : 'hello'};
+		// else
+			if (temp === 1)
+				return {
+					hi : 'hello',
+					world : '!'
+				};
+		while (temp > 5) i += 1;
+		for (;;) do();
   * use `next` to pass errors
   * top down function call order
 

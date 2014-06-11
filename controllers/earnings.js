@@ -7,8 +7,6 @@ var config = require(__dirname + '/../config/config'),
 	mysql = require(__dirname + '/../lib/mysql'),
 	mongo = require(__dirname + '/../lib/mongoskin');
 
-//get each earnings from the database 'earnings_report'
-//based from each feature from the dashboard, eto yung mga nasa overview tab
 exports.get_channel_earnings = function (req, res, next) {
 	var data = util.get_data([
 			'report_id'
@@ -51,9 +49,7 @@ exports.get_channel_earnings = function (req, res, next) {
 	           	 		.find({entity_id: channel.user_channel_id, approved: true, date_effective: {$lte: new Date(report_data[channel.report_id].end_date).getTime()} }, selectables)
 	           	 		.sort({date_effective : -1})
 	           	 		.toArray(function (err, _data) {
-	           	 			console.log('-------------');
-	           	 			console.log(channel);
-		           	 		if (err) {
+	           	 			if (err) {
 		           	 			console.log(err);
 		           	 			return fetched_rev_share(channel, null);
 		           	 		}
@@ -102,6 +98,11 @@ exports.get_channel_earnings = function (req, res, next) {
 	if (!req.access_token)
 		return next('Missing access_token');
 
+	// to be used by other calling function, 
+	if (res === null)
+		return as_helper.get_info({access_token:req.access_token, user_id:req.user_id}, get_earnings);
+
+
 	req.query.user_id && (scopes = 'payout.view, admin.view_all');
 	as_helper.has_scopes(req.access_token, scopes, get_user_info, next);
 
@@ -113,8 +114,32 @@ exports.net_networks_earnings = function (req, res, next) {
 };
 
 exports.get_recruiter_earnings = function (req, res ,next) {
-	
+	var data = util.get_data([
+			'report_id'
+		], [], req.query),
+		scopes = 'payout.view',
+		c_counter = 0,
+		report_ids = [],
+		report_data = {},
+		channel_data = {}
 
+		get_channels_recruited = function (err, _data) {
+
+
+		};
+
+
+
+
+
+	if (typeof data === 'string')
+		return next(data);
+	if (!req.access_token)
+		return next('Missing access_token');
+
+
+	req.query.user_id && (scopes = 'payout.view, admin.view_all');
+	as_helper.has_scopes(req.access_token, scopes, get_user_info, next);
 };
 
 exports.get_payment_schedule = function (req, res, next) {

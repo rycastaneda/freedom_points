@@ -5,7 +5,7 @@ module.exports = {
 	music	: 'music.add, music.edit, music.delete, music.view',
 	admin	: 'admin.edit_all, admin.create_all, admin.delete_all, admin.view_all, user.edit',
 	payout	: 'payout.view, payout.allow',
-	network	: 'network.accept'
+	network	: 'network.accept, network.view'
 };
 
 

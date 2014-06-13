@@ -43,7 +43,8 @@ module.exports = function (router, logger) {
 
 	//network related routes
 	router.get('/networks', network.get_networks);
-
+	router.get('/network/applicants', network.get_channel_applicants);
+	router.post('/network/applicant', network.accept_channel_applicant);
 
 
 	router.get('/auth/callback', function (req, res, next) {

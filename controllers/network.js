@@ -20,7 +20,7 @@ exports.get_networks = function (req, res, next) {
 };
 
 exports.get_channel_applicants = function (req, res, next) {
-	var target = 'approver.'.concat('network_', req.user_id, '.status'),
+	var target = 'approver.network_' + req.user_id + '.status',
 		send_response = function (err, result) {
 			if (err) return next(err);
 
@@ -51,7 +51,7 @@ exports.get_channel_applicants = function (req, res, next) {
 };
 
 exports.accept_channel_applicant = function (req, res, next) {
-	var target = 'approver.'.concat('network_',req.user_id, '.status'),
+	var target = 'approver.network_' + req.user_id + '.status',
 		send_response = function (err, result) {
 			if (err) return next(err);
 

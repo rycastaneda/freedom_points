@@ -48,37 +48,6 @@ exports.get_channel_applicants = function (req, res, next) {
 
 exports.accept_channel_applicant = function (req, res, next) {
 	var target = 'approver.network_' + req.user_id + '.status',
-		send_response = function (err, result) {
-			if (err) return next(err);
-
-			mysql.open(config.db_freedom)
-				.query('UPDATE channel SET partnership_status = 1, updated_at = ? where _id = ?',
-						[+new Date, req.body.id],
-						function (err, result) {
-							if (err) return next(err);
-
-							return res.send({message : 'all'});
-				})
-				.end();
-		},
-		check_all_approver = function (err, result) {
-
-			if (err) return next(err);
-
-			mongo.collection('partnership')
-				.findOne({ channel: req.body.channel }, function (err, result) {
-					var i;
-
-					if (err) return next(err);
-
-					for (i in result.approver){
-						if (!result.approver[i].status)
-							return res.send({message : 'network'});
-					}
-
-					send_response();
-				});
-		},
 		update = function (err, data) {
 			if (err) return next(err);
 
@@ -92,8 +61,38 @@ exports.accept_channel_applicant = function (req, res, next) {
 					{},
 					check_all_approver
 				);
-			};
+		},
+		check_all_approver = function (err, result) {
 
+			if (err) return next(err);
+
+			mongo.collection('partnership')
+				.findOne({ channel: req.body.channel }, function (err, result) {
+					var i;
+
+					if (err) return next(err);
+
+					for (i in result.approver) {
+						if (!result.approver[i].status)
+							return res.send({message : 'network'});
+					}
+
+					send_response();
+				});
+		},
+		send_response = function (err, result) {
+			if (err) return next(err);
+
+			mysql.open(config.db_freedom)
+				.query('UPDATE channel SET partnership_status = 1, updated_at = ? where _id = ?',
+						[+new Date, req.body.id],
+						function (err, result) {
+							if (err) return next(err);
+
+							return res.send({message : 'all'});
+				})
+				.end();
+		};
 
 	as_helper.has_scopes(req.access_token, 'network.accept', update, next);
 };

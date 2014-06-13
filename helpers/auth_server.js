@@ -86,7 +86,11 @@ exports.has_scopes = function (access_token, scopes, scb, ecb) {
 	curl_to_AS('GET', '/auth/has_scopes', {
 		access_token : access_token,
 		scopes : scopes
-	}, scb, ecb);
+	}, function (status, data) {
+		status === 200
+			? scb(data)
+			: ecb(data)
+	}, ecb);
 };
 
 

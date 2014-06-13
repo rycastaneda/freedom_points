@@ -24,9 +24,7 @@ exports.get_channel_applicants = function (req, res, next) {
 		send_response = function (err, result) {
 			if (err) return next(err);
 
-			console.log(JSON.stringify(result));
-
-			return res.send(JSON.stringify(result));
+			return res.send(result);
 	},
 		view = function (err, _data) {
 
@@ -96,6 +94,6 @@ exports.accept_channel_applicant = function (req, res, next) {
 				);
 			};
 
-	res.send(target);
+
 	as_helper.has_scopes(req.access_token, 'network.accept', update, next);
 };

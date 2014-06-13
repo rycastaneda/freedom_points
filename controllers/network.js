@@ -67,26 +67,27 @@ exports.accept_channel_applicant = function (req, res, next) {
 			if (err) return next(err);
 
 			mongo.collection('partnership')
-				.findOne({ channel: req.body.channel }, function (err, result) {
-					var i;
+				.findOne({ channel: req.body.channel }, send_response);
+		},
+		send_response = function (err, result) {
+			var i;
 
-					if (err) return next(err);
+			if (err) return next(err);
 
-					for (i in result.approver) {
-						if (!result.approver[i].status)
-							return res.send({message : 'network'});
-					}
+			for (i in result.approver) {
+				if (!result.approver[i].status)
+					return res.send({message : 'network'});
+			}
 
-					mysql.open(config.db_freedom)
-						.query('UPDATE channel SET partnership_status = 1, updated_at = ? where _id = ?',
-								[+new Date, req.body.id],
-								function (err, result) {
-									if (err) return next(err);
+			mysql.open(config.db_freedom)
+				.query('UPDATE channel SET partnership_status = 1, updated_at = ? where _id = ?',
+						[+new Date, req.body.id],
+						function (err, result) {
+							if (err) return next(err);
 
-									return res.send({message : 'all'});
-						})
-						.end();
-				});
+							return res.send({message : 'all'});
+				})
+				.end();
 		};
 
 	as_helper.has_scopes(req.access_token, 'network.accept', update, next);

@@ -26,11 +26,11 @@ exports.get_channel_applicants = function (req, res, next) {
 
 			console.log(JSON.stringify(result));
 
-			return res.send(200, JSON.stringify(result));
+			return res.send(JSON.stringify(result));
 	},
 		view = function (err, _data) {
 
-			if (err.data !== "Success") return next(err);
+			if (err.data !== 'Success') return next(err);
 
 			mongo.collection('partnership')
 				.find(
@@ -45,8 +45,6 @@ exports.get_channel_applicants = function (req, res, next) {
 					send_response);
 		};
 
-
-	console.log(req.access_token);
 	as_helper.has_scopes(req.access_token, 'network.view', view, next);
 };
 
@@ -61,22 +59,23 @@ exports.accept_channel_applicant = function (req, res, next) {
 						function (err, result) {
 							if (err) return next(err);
 
-							return res.send(200, {message : 'all'});
+							return res.send({message : 'all'});
 				})
 				.end();
 		},
 		check_all_approver = function (err, result) {
-			var i;
 
 			if (err) return next(err);
 
 			mongo.collection('partnership')
 				.findOne({ channel: req.body.channel }, function (err, result) {
+					var i;
+
 					if (err) return next(err);
 
-					for(i in result.approver){
-						if (!result.approver.i.status)
-							return res.send(200, {message : 'network'});
+					for (i in result.approver){
+						if (!result.approver[i].status)
+							return res.send({message : 'network'});
 					}
 
 					send_response();

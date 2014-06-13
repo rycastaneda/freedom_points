@@ -21,11 +21,6 @@ exports.get_networks = function (req, res, next) {
 
 exports.get_channel_applicants = function (req, res, next) {
 	var target = 'approver.network_' + req.user_id + '.status',
-		send_response = function (err, result) {
-			if (err) return next(err);
-
-			return res.send(result);
-	},
 		view = function (err, _data) {
 
 			if (err.data !== 'Success') return next(err);
@@ -41,6 +36,11 @@ exports.get_channel_applicants = function (req, res, next) {
 						channel : 1
 					},
 					send_response);
+		},
+		send_response = function (err, result) {
+			if (err) return next(err);
+
+			return res.send(result);
 		};
 
 	as_helper.has_scopes(req.access_token, 'network.view', view, next);

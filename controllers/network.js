@@ -77,21 +77,16 @@ exports.accept_channel_applicant = function (req, res, next) {
 							return res.send({message : 'network'});
 					}
 
-					send_response();
+					mysql.open(config.db_freedom)
+						.query('UPDATE channel SET partnership_status = 1, updated_at = ? where _id = ?',
+								[+new Date, req.body.id],
+								function (err, result) {
+									if (err) return next(err);
+
+									return res.send({message : 'all'});
+						})
+						.end();
 				});
-		},
-		send_response = function (err, result) {
-			if (err) return next(err);
-
-			mysql.open(config.db_freedom)
-				.query('UPDATE channel SET partnership_status = 1, updated_at = ? where _id = ?',
-						[+new Date, req.body.id],
-						function (err, result) {
-							if (err) return next(err);
-
-							return res.send({message : 'all'});
-				})
-				.end();
 		};
 
 	as_helper.has_scopes(req.access_token, 'network.accept', update, next);

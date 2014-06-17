@@ -69,7 +69,7 @@ exports.get_recruiter_earnings = function (req, res ,next) {
 		},
 		get_earnings = function (err, _data) {
 			if (err) return next(err);			
-			if (data.length === 0) 
+			if (_data.length === 0) 
 				return res.send([]);
 			req.query.report_id.split(',').forEach(function (ri) {
 				if (ri.trim() !== '')
@@ -80,7 +80,7 @@ exports.get_recruiter_earnings = function (req, res ,next) {
 		get_recruited_channels = function (err, _data) {
 			if (err) return next(err);
 			mysql.open(config.db_freedom)
-				.query('SELECT _id, recruiter, recruited_date from channel where recruiter = ? and partnership_status and recruited_date > ?', [_data.user_data._id, (+new Date() - 31556926000) ], get_earnings)
+				.query('SELECT _id, recruiter, recruited_date from channel where recruiter = ? and partnership_status and recruited_date is not null and recruited_date > ?', [_data.user_data._id, +new Date() - 31556926000 ], get_earnings)
 				.end();
 
 		},

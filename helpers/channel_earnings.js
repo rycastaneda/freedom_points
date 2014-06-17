@@ -23,11 +23,11 @@ var config = require(__dirname + '/../config/config'),
 			}
 		};
 		this.loop_to_channels = function (err, _data) {
-
-			var selectables = {date_effective : 1, revenue_share : 1, entity_id : 1};
+			var selectables = {date_effective : 1, revenue_share : 1, entity_id : 1},
+				i, j;
 			if (err) return self.callback(err);
 
-			for ( var i in _data) {
+			for ( i in _data) {
 				self.report_data[_data[i].id] = {
 					start_date : _data[i].start_date, 
 					end_date : _data[i].end_date,
@@ -38,7 +38,7 @@ var config = require(__dirname + '/../config/config'),
 			if (self.channel_data.length === 0) 
 				return self.callback(null,[]);
 
-			for ( var j in self.channel_data) {
+			for ( j in self.channel_data) {
 
 				( function( channel, index ) {
 					mongo.collection('revenue_share')

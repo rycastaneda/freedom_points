@@ -20,10 +20,13 @@ exports.get_networks = function (req, res, next) {
 };
 
 exports.get_channel_applicants = function (req, res, next) {
+
+	console.log(JSON.stringify(req));
+
 	var target = 'approver.network_' + req.user_id + '.status',
 		view = function (status, _data) {
 
-			console.log(target);
+
 
 			mongo.collection('partnership')
 				.find(

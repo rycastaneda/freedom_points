@@ -21,9 +21,9 @@ exports.get_networks = function (req, res, next) {
 
 exports.get_channel_applicants = function (req, res, next) {
 	var target = 'approver.network_' + req.user_id + '.status',
-		view = function (err, _data) {
+		view = function (status, _data) {
 
-			if (err.data !== 'Success') return next(err);
+			console.log(target);
 
 			mongo.collection('partnership')
 				.find(
@@ -42,6 +42,7 @@ exports.get_channel_applicants = function (req, res, next) {
 
 			return res.send(result);
 		};
+
 
 	as_helper.has_scopes(req.access_token, 'network.view', view, next);
 };
@@ -89,6 +90,7 @@ exports.accept_channel_applicant = function (req, res, next) {
 				})
 				.end();
 		};
+
 
 	as_helper.has_scopes(req.access_token, 'network.accept', update, next);
 };

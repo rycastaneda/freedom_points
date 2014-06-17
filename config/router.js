@@ -33,6 +33,7 @@ module.exports = function (router, logger) {
 	//earnings related routes
 	router.get('/earnings/date_range', earnings.get_range_of_payments);
 	router.get('/earnings/channel', earnings.get_channel_earnings);
+	router.get('/earnings/recruits', earnings.get_recruiter_earnings);
 	router.get('/earnings/generate_sum', earnings.generate_summed_payouts);
 
 	//prospect related routes

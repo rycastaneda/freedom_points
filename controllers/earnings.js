@@ -2,59 +2,32 @@ var config = require(__dirname + '/../config/config'),
     logger = require(__dirname + '/../lib/logger'),
 	util = require(__dirname + '/../helpers/util'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),
+	Channel_earnings = require(__dirname + '/../helpers/channel_earnings'),
     qs = require('querystring'),
     http = require('http'),
-	mysql = require(__dirname + '/../lib/mysql');
+	mysql = require(__dirname + '/../lib/mysql'),
+	mongo = require(__dirname + '/../lib/mongoskin');
 
-//get each earnings from the database 'earnings_report'
-//based from each feature from the dashboard, eto yung mga nasa overview tab
 exports.get_channel_earnings = function (req, res, next) {
-	var data = util.get_data([
-			'report_id'
-		], [], req.query),
+	var data = util.get_data(['report_id'], [], req.query),
 		scopes = 'payout.view',
 		report_ids = [],
-		report_data = {},
-		channel_data = {},
+		earnings,
 		done = function (err, _data) {
 			if (err) return next(err);
-
-			for(var i in _data) {
-				report_data[_data[i].id] = {
-					start_date : _data[i].start_date,
-					end_date : _data[i].end_date
-				};
-			}
-
-			res.send({report:report_data, channels:channel_data});
-
-		},
-		get_report_data = function (err, _data) {
-			if (err) return next(err);
-
-			channel_data = _data;
-			mysql.open(config.db_earnings)
-				.query('SELECT id, start_date, end_date from report where id in (?) group by id order by start_date desc', [report_ids], done)
-				.end();
-
+			res.send(_data);
 		},
 		get_earnings = function (err, _data) {
 			if (err) return next(err);
-
 			if(!_data.user_data[config.app_id+'_data'].channels_owned) return res.send({});
-
 			req.query.report_id.split(',').forEach(function (ri) {
 				if (ri.trim() !== '')
 					report_ids.push(ri.trim());
 			});
-
-			mysql.open(config.db_earnings)
-				.query('SELECT * from summed_earnings WHERE report_id in (?) and user_channel_id in (?)', [report_ids, _data.user_data[config.app_id+'_data'].channels_owned], get_report_data)
-				.end();
+			earnings = new Channel_earnings (report_ids, _data.user_data[config.app_id + '_data'].channels_owned, done).get_earnings();
 		},
 		get_user_info = function (status, _data) {
 			if (status !== 200) return next(_data);
-
 			if (req.query.user_id)
 				as_helper.get_info({access_token:req.access_token, user_id:req.query.user_id}, get_earnings);
 			else
@@ -65,6 +38,10 @@ exports.get_channel_earnings = function (req, res, next) {
 		return next(data);
 	if (!req.access_token)
 		return next('Missing access_token');
+
+	// to be used by other calling function, 
+	if (res === null)
+		return as_helper.get_info({access_token:req.access_token, user_id:req.user_id}, get_earnings);
 
 	req.query.user_id && (scopes = 'payout.view, admin.view_all');
 	as_helper.has_scopes(req.access_token, scopes, get_user_info, next);
@@ -78,7 +55,49 @@ exports.net_networks_earnings = function (req, res, next) {
 
 exports.get_recruiter_earnings = function (req, res ,next) {
 
+	var data = util.get_data(['report_id'], [], req.query),
+		scopes = 'payout.view',
+		report_ids = [],
+		one_year = 31556926000,
+		earnings,
+		done = function (err, _data) {
+			if (err) return next(err);
+			res.send(_data);
+		},
+		get_earnings = function (err, _data) {
+			if (err) return next(err);			
+			if (_data.length === 0) 
+				return res.send([]);
+			req.query.report_id.split(',').forEach(function (ri) {
+				if (ri.trim() !== '')
+					report_ids.push(ri.trim());
+			});
+			earnings = new Channel_earnings (report_ids, _data.map( function (a) { return a._id }), done).get_earnings();
+		},
+		get_recruited_channels = function (err, _data) {
+			if (err) return next(err);
+			mysql.open(config.db_freedom)
+				.query('SELECT _id, recruiter, recruited_date from channel where recruiter = ? and partnership_status and recruited_date is not null and recruited_date > ?', [_data.user_data._id, +new Date() - one_year ], get_earnings)
+				.end();
 
+		},
+		get_user_info = function (err, _data) {
+
+			if (req.query.user_id)
+				as_helper.get_info({access_token:req.access_token, user_id:req.query.user_id}, get_recruited_channels);
+			else
+				as_helper.get_info({access_token:req.access_token, self:true}, get_recruited_channels);
+
+		};
+
+	if (typeof data === 'string')
+		return next(data);
+	if (!req.access_token)
+		return next('Missing access_token');
+
+
+	req.query.user_id && (scopes = 'payout.view, admin.view_all');
+	as_helper.has_scopes(req.access_token, scopes, get_user_info, next);
 };
 
 exports.get_payment_schedule = function (req, res, next) {
@@ -99,10 +118,10 @@ exports.get_range_of_payments = function (req, res, next) {
 				return next(err);
 			mysql.open(config.db_earnings);
 			if (!_data)
-					mysql.query('SELECT id, start_date, end_date date from report group by id order by id desc;',done).end();
+					mysql.query('SELECT id, start_date, end_date date from report group by id order by id desc;', done).end();
 			else {
 					dte = new Date(_data.user_data.created_at);
-					mysql.query('SELECT id, start_date, end_date date from report where DATE_FORMAT(date(start_date),"%Y-%m") >= "' + dte.getFullYear() + '-' + ('0'+(dte.getMonth() + 1)).slice(-2) + '" group by id order by id desc',done).end();
+					mysql.query('SELECT id, start_date, end_date date from report where DATE_FORMAT(date(start_date),"%Y-%m") >= "' + dte.getFullYear() + '-' + ('0'+(dte.getMonth() + 1)).slice(-2) + '" group by id order by id desc', done).end();
 			}
 		};
 
@@ -123,10 +142,8 @@ exports.get_range_of_payments = function (req, res, next) {
 
 
 exports.generate_summed_payouts = function (req, res, next) {
-	//check if we have admin scopes
-	var data = util.get_data([
-			'report_id'
-		], [], req.query),
+	//TODO check if we have admin scopes, for admin module of earnings together with other earnings generation function
+	var data = util.get_data(['report_id'], [], req.query),
 
 		get_earnings = function (report_id) {
 			console.log('Processing . . . . .');

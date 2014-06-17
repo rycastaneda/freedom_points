@@ -35,20 +35,23 @@ var config = require(__dirname + '/../config/config'),
 				};
 			}
 			
-			if (self.channel_data.length === 0) 
+			if (!self.channel_data.length) 
 				return self.callback(null,[]);
 
 			for ( j in self.channel_data) {
 
 				( function( channel, index ) {
 					mongo.collection('revenue_share')
-	           	 		.find({entity_id: channel.user_channel_id, approved: true, date_effective: {$lte: new Date(self.report_data[channel.report_id].end_date).getTime()} }, selectables)
+	           	 		.find({ entity_id: channel.user_channel_id, 
+	           	 				approved: true, 
+	           	 				date_effective: {$lte: new Date(self.report_data[channel.report_id].end_date).getTime()} 
+	           	 			}, selectables)
 	           	 		.sort({date_effective : -1})
 	           	 		.toArray(function (err, _data) {
 	           	 			
 	           	 			if (err) 
 		           	 			return self.fetched_rev_share(channel, null);
-		           	 		if (_data.length === 0)
+		           	 		if (!_data.length)
 		           	 			return self.fetched_rev_share(channel, null);
 		           	 		
 		           	 		return self.fetched_rev_share(channel, _data[0]);

@@ -26,7 +26,7 @@ exports.get_channel_earnings = function (req, res, next) {
 				if (ri.trim() !== '')
 					report_ids.push(ri.trim());
 			});
-			earnings = new Channel_earnings (report_ids, _data.user_data[config.app_id+'_data'].channels_owned ,done).get_earnings();
+			earnings = new Channel_earnings (report_ids, _data.user_data[config.app_id + '_data'].channels_owned ,done).get_earnings();
 		},
 		get_user_info = function (status, _data) {
 			if (status !== 200) return next(_data);

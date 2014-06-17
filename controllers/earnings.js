@@ -39,10 +39,6 @@ exports.get_channel_earnings = function (req, res, next) {
 	if (!req.access_token)
 		return next('Missing access_token');
 
-	// to be used by other calling function, 
-	if (res === null)
-		return as_helper.get_info({access_token:req.access_token, user_id:req.user_id}, get_earnings);
-
 	req.query.user_id && (scopes = 'payout.view, admin.view_all');
 	as_helper.has_scopes(req.access_token, scopes, get_user_info, next);
 
@@ -50,6 +46,48 @@ exports.get_channel_earnings = function (req, res, next) {
 
 exports.net_networks_earnings = function (req, res, next) {
 
+	var data = util.get_data(['report_id'], [], req.query),
+		scopes = 'payout.view',
+		report_ids = [],
+		one_year = 31556926000,
+		earnings,
+		done = function (err, _data) {
+			if (err) return next(err);
+			res.send(_data);
+		},
+		get_earnings = function (err, _data) {
+			if (err) return next(err);			
+			if (_data.length === 0) 
+				return res.send([]);
+			req.query.report_id.split(',').forEach(function (ri) {
+				if (ri.trim() !== '')
+					report_ids.push(ri.trim());
+			});
+			earnings = new Channel_earnings (report_ids, _data.map( function (a) { return a._id }), done).get_earnings();
+		},
+		get_recruited_channels = function (err, _data) {
+			if (err) return next(err);
+			mysql.open(config.db_freedom)
+				.query('SELECT _id, recruiter, recruited_date from channel where recruiter = ? and partnership_status and recruited_date is not null and recruited_date > ?', [_data.user_data._id, +new Date() - one_year ], get_earnings)
+				.end();
+
+		},
+		get_user_info = function (err, _data) {
+
+			if (req.query.user_id)
+				as_helper.get_info({access_token:req.access_token, user_id:req.query.user_id}, get_recruited_channels);
+			else
+				as_helper.get_info({access_token:req.access_token, self:true}, get_recruited_channels);
+
+		};
+
+	if (typeof data === 'string')
+		return next(data);
+	if (!req.access_token)
+		return next('Missing access_token');
+
+	req.query.user_id && (scopes = 'payout.view, admin.view_all');
+	as_helper.has_scopes(req.access_token, scopes, get_user_info, next);
 
 };
 
@@ -94,7 +132,6 @@ exports.get_recruiter_earnings = function (req, res ,next) {
 		return next(data);
 	if (!req.access_token)
 		return next('Missing access_token');
-
 
 	req.query.user_id && (scopes = 'payout.view, admin.view_all');
 	as_helper.has_scopes(req.access_token, scopes, get_user_info, next);

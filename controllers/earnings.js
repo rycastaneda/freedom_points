@@ -63,7 +63,7 @@ exports.get_recruiter_earnings = function (req, res ,next) {
 		scopes = 'payout.view',
 		report_ids = [],
 		earnings,
-		done = function(err, _data) {
+		done = function (err, _data) {
 			if (err) return next(err);
 			res.send(_data);
 		},

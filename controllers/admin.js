@@ -5,35 +5,18 @@ var config = require(__dirname + '/../config/config'),
 	as_helper = require(__dirname + '/../helpers/auth_server');
 
 exports.find_applicants = function(req, res, next){
-    var data = {},
-        stat,
-        page = 1,
-        size = 10,
-		queryApplicants = 'SELECT _id, user_id, linked_cms, channel_username, channel_name, network_id, \
-						network_name, last30_days, total_views, total_comments, total_subscribers, \
-						overall_goodstanding, created_at FROM channel WHERE partnership_status = 0 \
-						ORDER BY created_at DESC LIMIT ?, ?;',
-        query = function () {
+	var find_non_approved = function (status, _data) {
+		if (status !== 200) return next(_data);
 
-            if (req.query.page && !isNaN(req.query.page)) {
-                page = req.query.page;
-            }
-
-			page = (page - 1) * 10;
-
-			size = req.query.size >= 100 ? 100 : +req.query.size;
-
-            mysql.open(config.db_freedom)
-                .query(queryApplicants, [page, size], function (err, result) {
-                    if (err) return next(err);
-
-                    res.send(200, result);
-                })
-				.end();
-	}
+		mongo.collection('partnership')
+			.find({'approver.admin.status' : true}, check_results);
+	},
+	check_results = function (err, result) {
+		if (err) return next(err);
+	};
 
     if (req.is_admin)
-        as_helper.has_scopes(req.access_token, 'admin.view_all', query, next);
+        as_helper.has_scopes(req.access_token, 'admin.view_all', find_non_approved, next);
     else
 		return next('Unauthorized');
 };

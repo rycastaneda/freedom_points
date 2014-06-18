@@ -39,7 +39,8 @@ exports.get_channel_applicants = function (req, res, next) {
 
 			network_id = result[0]._id;
 
-			target = JSON.parse('{"approver.network_' + network_id + '.status" : false}');
+			target = {};
+			target["approver.network_" + network_id + ".status"] = false;
 
 			// look for all channels that requested partnership to the network
 			mongo.collection('partnership')
@@ -95,8 +96,9 @@ exports.accept_channel_applicant = function (req, res, next) {
 
 			network_id = result[0]._id;
 
-			target = JSON.parse('{"approver.network_' + network_id + '.status" : true}');
-
+			target = {};
+			target["approver.network_" + network_id + ".status"] = true;
+			
 			mongo.collection('partnership')
 				.update(
 					{ channel: req.body.channel },

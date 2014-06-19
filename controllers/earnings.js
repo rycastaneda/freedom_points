@@ -63,7 +63,7 @@ exports.get_networks_earnings = function (req, res, next) {
 				if (ri.trim() !== '')
 					report_ids.push(ri.trim());
 			});
-			earnings = new Channel_earnings (report_ids, _data.map( function (a) { return a._id }), done).get_earnings(false);
+			earnings = new Channel_earnings (report_ids, _data.map( function (a) { return a._id }), done).get_earnings();
 		},
 		get_recruited_channels = function (err, _data) {
 			if (err) return next(err);

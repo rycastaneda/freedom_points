@@ -218,3 +218,11 @@ exports.generate_summed_payouts = function (req, res, next) {
 	get_earnings(data.report_id);
 
 };
+
+
+//for new earnings
+//run the checking for channel_id with NO channel value - own db lookup
+//run the checking for channel value - own db
+//run youtube check
+//run final update query to get all the unfiltered results
+// update revenue_vid set user_channel_id = CONCAT('UC',channel_id) where report_id ='1402092993' and channel_id != '' and user_channel_id is  null

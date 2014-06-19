@@ -68,7 +68,7 @@ var config = require(__dirname + '/../config/config'),
 		};
 		this.get_earnings = function () {
 			mysql.open(config.db_earnings)
-				.query('SELECT * from summed_earnings WHERE report_id in (?) and user_channel_id in (?)', [self.report_ids, self.channel_ids], self.get_report_data)
+				.query('SELECT c1.*, c2.network_name, c2.network_id, c2.recruiter, c2.recruited_date from earnings_report.summed_earnings c1 JOIN freedom.channel c2 ON c1.user_channel_id = c2._id WHERE c1.report_id in (?) and c1.user_channel_id in (?)', [self.report_ids, self.channel_ids], self.get_report_data)
 				.end();
 		};
 

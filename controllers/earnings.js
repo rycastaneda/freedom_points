@@ -44,7 +44,7 @@ exports.get_channel_earnings = function (req, res, next) {
 
 };
 
-exports.net_networks_earnings = function (req, res, next) {
+exports.get_networks_earnings = function (req, res, next) {
 
 	var data = util.get_data(['report_id'], [], req.query),
 		scopes = 'payout.view',
@@ -63,12 +63,12 @@ exports.net_networks_earnings = function (req, res, next) {
 				if (ri.trim() !== '')
 					report_ids.push(ri.trim());
 			});
-			earnings = new Channel_earnings (report_ids, _data.map( function (a) { return a._id }), done).get_earnings();
+			earnings = new Channel_earnings (report_ids, _data.map( function (a) { return a._id }), done).get_earnings(false);
 		},
 		get_recruited_channels = function (err, _data) {
 			if (err) return next(err);
 			mysql.open(config.db_freedom)
-				.query('SELECT _id, recruiter, recruited_date from channel where recruiter = ? and partnership_status and recruited_date is not null and recruited_date > ?', [_data.user_data._id, +new Date() - one_year ], get_earnings)
+				.query('SELECT _id, from channel where network_id in (?) and partnership_status', [_data.user_data.networks_owned], get_earnings)
 				.end();
 
 		},
@@ -89,6 +89,10 @@ exports.net_networks_earnings = function (req, res, next) {
 	req.query.user_id && (scopes = 'payout.view, admin.view_all');
 	as_helper.has_scopes(req.access_token, scopes, get_user_info, next);
 
+};
+
+exports.get_sponsored_networks_earnings = function (req, res, next) {
+	//to be added later
 };
 
 exports.get_recruiter_earnings = function (req, res ,next) {

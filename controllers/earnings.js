@@ -44,7 +44,7 @@ exports.get_channel_earnings = function (req, res, next) {
 
 };
 
-exports.net_networks_earnings = function (req, res, next) {
+exports.get_networks_earnings = function (req, res, next) {
 
 	var data = util.get_data(['report_id'], [], req.query),
 		scopes = 'payout.view',
@@ -68,7 +68,7 @@ exports.net_networks_earnings = function (req, res, next) {
 		get_recruited_channels = function (err, _data) {
 			if (err) return next(err);
 			mysql.open(config.db_freedom)
-				.query('SELECT _id, recruiter, recruited_date from channel where recruiter = ? and partnership_status and recruited_date is not null and recruited_date > ?', [_data.user_data._id, +new Date() - one_year ], get_earnings)
+				.query('SELECT _id, from channel where network_id in (?) and partnership_status', [_data.user_data.networks_owned], get_earnings)
 				.end();
 
 		},
@@ -89,6 +89,10 @@ exports.net_networks_earnings = function (req, res, next) {
 	req.query.user_id && (scopes = 'payout.view, admin.view_all');
 	as_helper.has_scopes(req.access_token, scopes, get_user_info, next);
 
+};
+
+exports.get_sponsored_networks_earnings = function (req, res, next) {
+	//to be added later
 };
 
 exports.get_recruiter_earnings = function (req, res ,next) {
@@ -218,3 +222,11 @@ exports.generate_summed_payouts = function (req, res, next) {
 	get_earnings(data.report_id);
 
 };
+
+
+//for new earnings
+//run the checking for channel_id with NO channel value - own db lookup
+//run the checking for channel value - own db
+//run youtube check
+//run final update query to get all the unfiltered results
+// update revenue_vid set user_channel_id = CONCAT('UC',channel_id) where report_id ='1402092993' and channel_id != '' and user_channel_id is  null

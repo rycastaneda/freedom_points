@@ -10,6 +10,11 @@ var config = require(__dirname + '/../config/config'),
 		this.c_counter = 0;
 		this.report_data = {};
 		this.channel_data = {};
+		this.precompute = false;
+		this.compute = function (_data) {
+
+			//go for computation here and return data
+		};
 		this.fetched_rev_share = function (channel, rev_share) {
 			self.c_counter++;
 			console.log("LOOP done");
@@ -19,15 +24,19 @@ var config = require(__dirname + '/../config/config'),
 			channel.revenue_share = rev_share;
 			self.report_data[channel.report_id].earnings.push(channel);
 			if (self.c_counter === self.channel_data.length) {
-				self.callback(null,self.report_data);
+				if (!self.precompute)
+					self.callback(null, self.report_data);
+				else 
+					return self.compute(self.report_data);
 			}
 		};
 		this.loop_to_channels = function (err, _data) {
-			var selectables = {date_effective : 1, revenue_share : 1, entity_id : 1},
-				i, j;
+			var selectables = {date_effective: 1, revenue_share: 1, entity_id: 1},
+				i, 
+				j;
 			if (err) return self.callback(err);
 
-			for ( i in _data) {
+			for (i in _data) {
 				self.report_data[_data[i].id] = {
 					start_date : _data[i].start_date, 
 					end_date : _data[i].end_date,
@@ -36,9 +45,10 @@ var config = require(__dirname + '/../config/config'),
 			}
 			
 			if (!self.channel_data.length) 
-				return self.callback(null,[]);
+				return self.callback(null, []);
+				
 
-			for ( j in self.channel_data) {
+			for (j in self.channel_data) {
 
 				( function( channel, index ) {
 					mongo.collection('revenue_share')
@@ -66,9 +76,10 @@ var config = require(__dirname + '/../config/config'),
 				.query('SELECT id, start_date, end_date from report where id in (?) group by id order by start_date desc', [self.report_ids], self.loop_to_channels)
 				.end();
 		};
-		this.get_earnings = function () {
+		this.get_earnings = function (p) {
+			self.precompute = p;
 			mysql.open(config.db_earnings)
-				.query('SELECT * from summed_earnings WHERE report_id in (?) and user_channel_id in (?)', [self.report_ids, self.channel_ids], self.get_report_data)
+				.query('SELECT c1.*, c2.network_name, c2.network_id, c2.recruiter, c2.recruited_date from earnings_report.summed_earnings c1 JOIN freedom.channel c2 ON c1.user_channel_id = c2._id WHERE c1.report_id in (?) and c1.user_channel_id in (?)', [self.report_ids, self.channel_ids], self.get_report_data)
 				.end();
 		};
 

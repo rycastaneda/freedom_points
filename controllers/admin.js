@@ -7,7 +7,7 @@ var config = require(__dirname + '/../config/config'),
 exports.find_applicants = function(req, res, next){
 	var find_non_approved = function (status, _data) {
 
-		if (status.data !== "Success") return next(_data);
+		if (status.data !== 'Success') return next(_data);
 
 		// this is still missing paging
 		mongo.collection('partnership')
@@ -18,7 +18,7 @@ exports.find_applicants = function(req, res, next){
 			.toArray(check_results);
 	},
 	check_results = function (err, result) {
-		var query = "SELECT * FROM channel where _id in (?);",
+		var query = 'SELECT * FROM channel where _id in (?);',
 			data = [],
 			i;
 
@@ -29,15 +29,13 @@ exports.find_applicants = function(req, res, next){
 		for (i in result)
 			data[0].push(result[i].channel);
 
-		console.log(data);
-
 		mysql.open(config.db_freedom)
 			.query(query, data, send_response);
 	}
 	send_response = function (err, result) {
 		if (err) return next(err);
 
-		if (!result.length) return next("no channels need approval");
+		if (!result.length) return next('no channels need approval');
 
 		return res.send(result);
 	};
@@ -99,7 +97,7 @@ exports.accept_applicant = function (req, res, next) {
                     .query('UPDATE channel SET partnership_status = 1, updated_at = ? where _id = ? LIMIT 1', [+new Date, req.body.id], function (err, result) {
                         if (err) return next(err);
 
-                        res.send(200, {message: "all"});
+                        res.send(200, {message: 'all'});
                     })
                     .end();
             });

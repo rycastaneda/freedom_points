@@ -6,13 +6,40 @@ var config = require(__dirname + '/../config/config'),
 
 exports.find_applicants = function(req, res, next){
 	var find_non_approved = function (status, _data) {
-		if (status !== 200) return next(_data);
 
+		if (status.data !== "Success") return next(_data);
+
+		// this is still missing paging
 		mongo.collection('partnership')
-			.find({'approver.admin.status' : true}, check_results);
+			.find(
+				{'approver.admin.status' : false},
+				{ _id : 0, channel : 1}
+			)
+			.toArray(check_results);
 	},
 	check_results = function (err, result) {
+		var query = "SELECT * FROM channel where _id in (?);",
+			data = [],
+			i;
+
+		data[0] = [];
+
 		if (err) return next(err);
+
+		for (i in result)
+			data[0].push(result[i].channel);
+
+		console.log(data);
+
+		mysql.open(config.db_freedom)
+			.query(query, data, send_response);
+	}
+	send_response = function (err, result) {
+		if (err) return next(err);
+
+		if (!result.length) return next("no channels need approval");
+
+		return res.send(result);
 	};
 
     if (req.is_admin)
@@ -25,8 +52,13 @@ exports.accept_applicant = function (req, res, next) {
     var data = {},
 	approvers,
 	i,
-    update = function () {
-        mongo.collection('partnership')
+    update = function (status, _data) {
+		if (typeof status === 'number' && status !== 200) return next(_data);
+
+		// fail-safe in case that status is not a STATUS CODE
+		if (typeof status === 'object' && status.data !== 'Success') return next(_data);
+
+		mongo.collection('partnership')
             .update(
                 {channel : req.body.id},
                 {$set : {
@@ -74,7 +106,7 @@ exports.accept_applicant = function (req, res, next) {
     };
 
     if (req.is_admin)
-        as_helper.has_scopes(req.access_token, 'admin.add_all', update, next);
+        as_helper.has_scopes(req.access_token, 'admin.create_all', update, next);
     else
 		return next('Unauthorized');
 };

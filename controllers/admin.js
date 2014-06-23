@@ -5,35 +5,43 @@ var config = require(__dirname + '/../config/config'),
 	as_helper = require(__dirname + '/../helpers/auth_server');
 
 exports.find_applicants = function(req, res, next){
-    var data = {},
-        stat,
-        page = 1,
-        size = 10,
-		queryApplicants = 'SELECT _id, user_id, linked_cms, channel_username, channel_name, network_id, \
-						network_name, last30_days, total_views, total_comments, total_subscribers, \
-						overall_goodstanding, created_at FROM channel WHERE partnership_status = 0 \
-						ORDER BY created_at DESC LIMIT ?, ?;',
-        query = function () {
+	var find_non_approved = function (status, _data) {
 
-            if (req.query.page && !isNaN(req.query.page)) {
-                page = req.query.page;
-            }
+		if (status.data !== 'Success') return next(_data);
 
-			page = (page - 1) * 10;
+		// this is still missing paging
+		mongo.collection('partnership')
+			.find(
+				{'approver.admin.status' : false},
+				{ _id : 0, channel : 1}
+			)
+			.toArray(check_results);
+	},
+	check_results = function (err, result) {
+		var query = 'SELECT * FROM channel where _id in (?);',
+			data = [],
+			i;
 
-			size = req.query.size >= 100 ? 100 : +req.query.size;
+		data[0] = [];
 
-            mysql.open(config.db_freedom)
-                .query(queryApplicants, [page, size], function (err, result) {
-                    if (err) return next(err);
+		if (err) return next(err);
 
-                    res.send(200, result);
-                })
-				.end();
+		for (i in result)
+			data[0].push(result[i].channel);
+
+		mysql.open(config.db_freedom)
+			.query(query, data, send_response);
 	}
+	send_response = function (err, result) {
+		if (err) return next(err);
+
+		if (!result.length) return next('no channels need approval');
+
+		return res.send(result);
+	};
 
     if (req.is_admin)
-        as_helper.has_scopes(req.access_token, 'admin.view_all', query, next);
+        as_helper.has_scopes(req.access_token, 'admin.view_all', find_non_approved, next);
     else
 		return next('Unauthorized');
 };
@@ -42,8 +50,13 @@ exports.accept_applicant = function (req, res, next) {
     var data = {},
 	approvers,
 	i,
-    update = function () {
-        mongo.collection('partnership')
+    update = function (status, _data) {
+		if (typeof status === 'number' && status !== 200) return next(_data);
+
+		// fail-safe in case that status is not a STATUS CODE
+		if (typeof status === 'object' && status.data !== 'Success') return next(_data);
+
+		mongo.collection('partnership')
             .update(
                 {channel : req.body.id},
                 {$set : {
@@ -84,14 +97,14 @@ exports.accept_applicant = function (req, res, next) {
                     .query('UPDATE channel SET partnership_status = 1, updated_at = ? where _id = ? LIMIT 1', [+new Date, req.body.id], function (err, result) {
                         if (err) return next(err);
 
-                        res.send(200, {message: "all"});
+                        res.send(200, {message: 'all'});
                     })
                     .end();
             });
     };
 
     if (req.is_admin)
-        as_helper.has_scopes(req.access_token, 'admin.add_all', update, next);
+        as_helper.has_scopes(req.access_token, 'admin.create_all', update, next);
     else
 		return next('Unauthorized');
 };

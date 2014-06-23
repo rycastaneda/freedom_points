@@ -26,12 +26,13 @@ exports.get_channel_applicants = function (req, res, next) {
 
 		// check if requester is a network
 		check_if_network = function (status, _data) {
+			var query = 'SELECT _id from network where owner_id = ? LIMIT 1';
+
 			if (typeof status === 'number' && status !== 200) return next(_data);
 
 			// failsafe
 			if (typeof status === 'object' && status.message !== 'Success') return next(status, _data);
 
-			var query = 'SELECT _id from network where owner_id = ? LIMIT 1';
 
 			mysql.open(config.db_freedom)
 				.query(query, req.user_id, on_check_network)

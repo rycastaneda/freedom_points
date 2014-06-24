@@ -44,6 +44,7 @@ module.exports = function (router, logger) {
 	router.delete('/prospect/delete', prospect.delete_prospects);
 
 	//network related routes
+	router.post('/network/apply', network.apply);
 	router.get('/networks', network.get_networks);
 	router.get('/network/applicants', network.get_channel_applicants);
 	router.post('/network/applicant', network.accept_channel_applicant);

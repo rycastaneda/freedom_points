@@ -45,8 +45,7 @@ exports.auth_google = function (req, res, next) {
         approval_prompt : 'force',
         scope : [
             'profile',
-            'email',
-            'https://www.googleapis.com/auth/youtube.readonly'
+            'email'
         ].join(' ')
     }));
 };

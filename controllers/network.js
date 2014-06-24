@@ -1,9 +1,27 @@
-var config = require(__dirname + '/../config/config'),
+var fs = require('fs'),
+	config = require(__dirname + '/../config/config'),
 	mysql = require(__dirname + '/../lib/mysql'),
 	mongo = require(__dirname + '/../lib/mongoskin'),
 	util = require(__dirname + '/../helpers/util'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),
     curl = require(__dirname + '/../lib/curl');
+
+exports.apply = function (req, res, next) {
+
+	//if (!req.access_token)
+	//	return next('access_token is missing');
+
+	console.log('apply');
+
+	req.busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
+		console.log(config.upload_dir + filename);
+		file.pipe(fs.createWriteStream(config.upload_dir + filename));
+	});
+
+	req.busboy.on('finish', function() {
+		res.send({message : 'File successfully uploaded'});
+	});
+};
 
 exports.get_networks = function (req, res, next) {
 	var send_response = function (err, result) {

@@ -8,19 +8,34 @@ var fs = require('fs'),
 
 exports.apply = function (req, res, next) {
 
-	//if (!req.access_token)
-	//	return next('access_token is missing');
+	var send_response = function (status, data) {
 
-	console.log('apply');
+		if (status !== 200)
+			return next(data);
+
+		res.send({});
+	};
+
+	if (!req.access_token)
+		return next('access_token is missing');
 
 	req.busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
-		console.log(config.upload_dir + filename);
-		file.pipe(fs.createWriteStream(config.upload_dir + filename));
+		var temp = filename.split('.');
+		file.pipe(fs.createWriteStream(config.upload_dir + 'network_applications/' + req.user_id + '.' + temp[temp.length - 1]));
 	});
 
-	req.busboy.on('finish', function() {
-		res.send({message : 'File successfully uploaded'});
+	req.busboy.on('finish', function () {
+		req.user_data.network_application = {};
+		req.user_data.network_application.status = 'Pending';
+		req.user_data.network_application.submitted_at  = +new Date;
+		as_helper.update_app_data({
+			access_token : req.access_token,
+			user_id : req.user_id,
+			app_data : req.user_data
+		}, send_response, next);
 	});
+
+	req.pipe(req.busboy);
 };
 
 exports.get_networks = function (req, res, next) {

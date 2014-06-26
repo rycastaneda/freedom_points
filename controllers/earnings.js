@@ -66,9 +66,11 @@ exports.get_networks_earnings = function (req, res, next) {
 			earnings = new Channel_earnings (report_ids, _data.map( function (a) { return a._id }), done).get_earnings();
 		},
 		get_recruited_channels = function (err, _data) {
+			var q = 'SELECT _id, from channel where network_id in (?) and partnership_status';
+			
 			if (err) return next(err);
 			mysql.open(config.db_freedom)
-				.query('SELECT _id, from channel where network_id in (?) and partnership_status', [_data.user_data.networks_owned], get_earnings)
+				.query(q, [_data.user_data.networks_owned], get_earnings)
 				.end();
 
 		},
@@ -117,9 +119,10 @@ exports.get_recruiter_earnings = function (req, res ,next) {
 			earnings = new Channel_earnings (report_ids, _data.map( function (a) { return a._id }), done).get_earnings();
 		},
 		get_recruited_channels = function (err, _data) {
+			var q = 'SELECT _id, recruiter, recruited_date from channel where recruiter = ? and partnership_status and recruited_date is not null and recruited_date > ?';
 			if (err) return next(err);
 			mysql.open(config.db_freedom)
-				.query('SELECT _id, recruiter, recruited_date from channel where recruiter = ? and partnership_status and recruited_date is not null and recruited_date > ?', [_data.user_data._id, +new Date() - one_year ], get_earnings)
+				.query(q, [_data.user_data._id, +new Date() - one_year ], get_earnings)
 				.end();
 
 		},

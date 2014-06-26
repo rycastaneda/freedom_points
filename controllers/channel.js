@@ -232,9 +232,19 @@ exports.add_channel = function (req, res, next) {
 				};
 			}
 			mongo.collection('partnership')
-				.insert(datum, insert_revshare);
+				.insert(datum, check_network);
 		},
-		insert_revshare = function(err,result) {
+		check_network = function (err, result) {
+			if (err) return next(err);
+			if (!data.network_id)
+				return insert_revshare(null, {});
+
+			mysql.open(config.db_freedom)
+				.query('SELECT * FROM network WHERE _id = ?', data.network_id, insert_revshare)
+				.end();
+
+		},
+		insert_revshare = function (err, result) {
 			var datum = {
 					entity_id : data._id,
 					approved : true,			//for the first time only, this flag is for easy access in the earnings
@@ -252,9 +262,9 @@ exports.add_channel = function (req, res, next) {
 					updated_at : +new Date
 				};
 			if (err) return next(err);
-			if (data.network_id) {
+			if (result.length) {
 				datum.approver['network_' + data.network_id] = {
-					user_id : data.network_id,
+					user_id : result[0].owner_id,
 					status : true,				//for the first time true
 					comments : ''
 				};

@@ -21,6 +21,11 @@ exports.apply = function (req, res, next) {
 
 	req.busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
 		var temp = filename.split('.');
+		
+		if (temp[temp.length - 1] !== 'pdf') {
+			return next('Invalid file type');
+		}
+
 		file.pipe(fs.createWriteStream(config.upload_dir + 'network_applications/' + req.user_id + '.' + temp[temp.length - 1]));
 	});
 

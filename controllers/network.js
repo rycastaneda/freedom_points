@@ -28,16 +28,22 @@ exports.get_channel_applicants = function (req, res, next) {
 		check_if_network = function (status, _data) {
 			var query = 'SELECT _id from network where owner_id = ? LIMIT 1';
 
+			if (typeof status === 'number' && status !== 200) return next(_data);
+
+			// failsafe
+			if (typeof status === 'object' && status.message !== 'Success') return next(status, _data);
+
+
 			mysql.open(config.db_freedom)
 				.query(query, req.user_id, on_check_network)
 				.end();
 		},
 		on_check_network = function (err, result) {
 			if (err) return next(err);
-
 			if (!result.length) return next('not a network');
 
-			network_id = result[0]._id;
+			// assuming that the request contains an array of networks partnered to a network
+			network_id = (!!~req.networks.indexOf(req.query.network_id)) ? req.query.network_id : result[0]._id;
 
 			target = {};
 			target["approver.network_" + network_id + ".status"] = false;
@@ -98,7 +104,7 @@ exports.accept_channel_applicant = function (req, res, next) {
 
 			target = {};
 			target["approver.network_" + network_id + ".status"] = true;
-			
+
 			mongo.collection('partnership')
 				.update(
 					{ channel: req.body.channel },

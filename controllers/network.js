@@ -184,8 +184,9 @@ exports.view_rev_share = function (req, res, next) {
 
 		},
 		send_response = function (err, result) {
-			console.log(result.length);
 			if (err) return next(err);
+
+			if (result.length < 1) return next('nothing to approve');
 
 			return res.send(result);
 		};
@@ -279,7 +280,7 @@ exports.approve_rev_share = function (req, res, next) {
 			// failsafe for stupid auth server returns
 			if (typeof status === 'object' && status.message !== 'Success') return next(status, _data);
 
-			mongo.collection('test')
+			mongo.collection('revenue_share')
 				.find({_id : util.toObjectId(req.body.id)})
 				.toArray(update_all);
 		},
@@ -297,7 +298,7 @@ exports.approve_rev_share = function (req, res, next) {
 			if (all_true) updates.approved = true;
 			updates['approver.admin.status'] = true;
 
-			mongo.collection('test')
+			mongo.collection('revenue_share')
 				.update({_id : util.toObjectId(req.body.id)},
 					{'$set' : updates},
 					send_response);

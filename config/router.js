@@ -48,6 +48,10 @@ module.exports = function (router, logger) {
 	router.get('/network/applicants', network.get_channel_applicants);
 	router.post('/network/applicant', network.accept_channel_applicant);
 
+	// approve share
+	router.get('/network/shares', network.view_rev_share);
+	router.post('/network/share', network.approve_rev_share);
+
 
 	router.get('/auth/callback', function (req, res, next) {
 		if (req.query.state === 'google')

@@ -98,7 +98,7 @@ exports.accept_channel_applicant = function (req, res, next) {
 
 			target = {};
 			target["approver.network_" + network_id + ".status"] = true;
-			
+
 			mongo.collection('partnership')
 				.update(
 					{ channel: req.body.channel },
@@ -140,4 +140,178 @@ exports.accept_channel_applicant = function (req, res, next) {
 
 
 	as_helper.has_scopes(req.access_token, 'network.accept', check_if_network, next);
+};
+
+exports.view_rev_share = function (req, res, next) {
+	var check_if_network = function (status, _data) {
+			var query = 'SELECT * FROM network WHERE owner_id = ?;';
+
+			if (typeof status === 'number' && status != 200) return next(status);
+
+			// failsafe when auth server returned stupid result
+			if (typeof status === 'object' && status.message !== 'Success') return (status, _data);
+
+			mysql.open(config.db_freedom)
+				.query(query, req.user_id, on_check_network);
+		},
+		on_check_network = function (_err, _data){
+			var network,
+				target_network;
+
+			if (_err) return next(_err);
+
+			if (_data.length !== 1) return next(_err);
+
+			// assuming that the req body contains an array of networks in `req.networks`
+			network = (req.networks && !!~req.networks.indexOf(req.query.network_id)) ? req.query.network_id : _data[0]._id;
+
+			target_network = {};
+			target_network['approver.network_' + network.toString() + '.status'] = false;
+
+			mongo.collection('revenue_share')
+				.find(target_network)
+				.toArray(send_response);
+
+		},
+		get_all = function (status, _data) {
+			if (typeof status === 'number' && status != 200) return next(status);
+
+			// failsafe when auth server returned stupid result
+			if (typeof status === 'object' && status.message !== 'Success') return (status, _data);
+
+			mongo.collection('revenue_share')
+				.find({'approver.admin.status' : false}, send_response);
+
+		},
+		send_response = function (err, result) {
+			console.log(result.length);
+			if (err) return next(err);
+
+			return res.send(result);
+		};
+
+
+
+	if (req.query.admin === 1 && req.is_admin)
+		as_helper.has_scopes(req.access_token, 'admin.edit_all', get_all, next);
+	else
+		as_helper.has_scopes(req.access_token, 'network.get_share', check_if_network, next);
+};
+
+exports.approve_rev_share = function (req, res, next) {
+	var current_network;
+		check_if_network = function (status, _data) {
+			var query = 'SELECT * FROM network where owner_id = ?;';
+
+			if (typeof status === 'number' && status != 200) return next(status);
+
+			// failsafe for stupid auth server returns
+			if (typeof status === 'object' && status.message !== 'Success') return (status, _data);
+
+			if (!req.body.channel) return next("missing channel");
+			if (isNaN(req.body.share)) return next("missing share");
+
+			mysql.open(config.db_freedom)
+				.query(query, req.user_id, on_check_network)
+				.end();
+		},
+		on_check_network = function (_err, _result) {
+			var network,
+				query = 'SELECT _id from channel where network_id = ?';
+
+			if (_err || !_result || _result.length !== 1) return next(_err);
+
+			current_network = _result[0]._id;
+
+			mysql.open(config.db_freedom)
+				.query(query, current_network, all_networks_owned)
+				.end();
+		},
+		all_networks_owned = function (_err, _result) {
+			var data = {},
+				networks_owned = [],
+				i;
+
+			if (_err) return next(_err);
+
+			if (_result.length < 1) return next('no channels owned');
+
+			for (i in _result)
+				networks_owned.push(_result[i]._id);
+
+			if (!~networks_owned.indexOf(req.body.channel)) return next ('you don\'t own that channel');
+
+			data.approved = false;
+			data.approver = {};
+			data.approver['admin'] = {
+								comments : "",
+								status : false,
+								user_id : null
+							};
+
+			data.approver['network_' + current_network.toString()] = {
+								comments : "",
+								status : true,
+								user_id : req.user_id
+							};
+
+			data.entity_id = req.body.channel;
+			data.revenue_share = req.body.share;
+			data.created_at = +new Date;
+			data.updated_at = null;
+			data.date_effective = null;
+			data.latest = null;
+
+			mongo.collection('test')
+				.insert(data,on_insert_new_share);
+
+		},
+		on_insert_new_share = function (_err, _result) {
+			if (_err) return next(_err);
+			if (_result < 1) return next('nothing changed');
+
+			return res.send({message : 'done'});
+
+		},
+		approve_admin = function (status, _data) {
+			if (typeof status === 'number' && status !== 200) return next(_data);
+
+			// failsafe for stupid auth server returns
+			if (typeof status === 'object' && status.message !== 'Success') return next(status, _data);
+
+			mongo.collection('test')
+				.find({_id : util.toObjectId(req.body.id)})
+				.toArray(update_all);
+		},
+		update_all = function (_err, _result) {
+			var i,
+				all_true = true,
+				updates = {};
+
+
+			for (i in _result[0].approver){
+				if (!_result[0].approver[i].status && i !== 'admin')
+					all_true = false;
+			}
+
+			if (all_true) updates.approved = true;
+			updates['approver.admin.status'] = true;
+
+			mongo.collection('test')
+				.update({_id : util.toObjectId(req.body.id)},
+					{'$set' : updates},
+					send_response);
+		},
+		send_response = function (_err, _result) {
+			if (_err) return next(_err);
+			if (_result !== 1) return next ({message : "no update or too many updates"});
+
+
+			return res.send({message : "updated"});
+		};
+
+	if (parseInt(req.body.admin) === 1 && req.is_admin)
+		as_helper.has_scopes(req.access_token, 'admin.edit_all', approve_admin,next);
+	else
+		as_helper.has_scopes(req.access_token, 'network.approve_share', check_if_network, next);
 };

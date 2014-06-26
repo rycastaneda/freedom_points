@@ -144,7 +144,7 @@ exports.accept_channel_applicant = function (req, res, next) {
 
 exports.view_rev_share = function (req, res, next) {
 	var check_if_network = function (status, _data) {
-			var query = 'SELECT * FROM network WHERE owner_id = ?;';
+			var query = 'SELECT * FROM network WHERE owner_id = ?';
 
 			if (typeof status === 'number' && status != 200) return next(status);
 

@@ -66,7 +66,7 @@ exports.get_networks_earnings = function (req, res, next) {
 			earnings = new Channel_earnings (report_ids, _data.map( function (a) { return a._id }), done).get_earnings();
 		},
 		get_recruited_channels = function (err, _data) {
-			var q = 'SELECT _id, from channel where network_id in (?) and partnership_status';
+			var q = 'SELECT _id from channel where network_id in (?) and partnership_status';
 			
 			if (err) return next(err);
 			mysql.open(config.db_freedom)

@@ -60,3 +60,8 @@ exports.current_date = function () {
 exports.cleanString = function (s) {
 	return s.match(/\S{1,30}/g).join(' ');
 };
+
+
+exports.toObjectId = function (t) {
+    return new require('mongoskin').ObjectID(t);
+}

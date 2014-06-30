@@ -65,8 +65,11 @@ exports.get_access_token = function (data, cb) {
 exports.get_info = function (data, cb) {
 	curl_to_AS('GET', '/user', data,
 	function (status, data) {
-		if (status === 200)
-			return cb(null, data);
+		if (status === 200 && data.users.length === 1) {
+			data.users[0].app_data = data.users[0]['data_' + config.app_id];
+			delete data.users[0]['data_' + config.app_id];
+			return cb(null, data.users[0]);
+		}
 		cb(JSON.stringify(data));
 	},
 	cb);
@@ -94,4 +97,18 @@ exports.update_app_data = function (data, scb, ecb) {
 	data.app_id = config.app_id;
 	data.app_data = JSON.stringify(data.app_data);
 	curl_to_AS('POST', '/app/own_app_data', data, scb, ecb);
+};
+
+exports.get_users = function (access_token, filter, scb, ecb) {
+	filter.access_token = access_token;
+	curl_to_AS('GET', '/user', filter, function (status, data) {
+		if (data.users) {
+			data.users = data.users.map(function (a) {
+				a.app_data = a['data_' + config.app_id];
+				delete a['data_' + config.app_id];
+				return a;
+			})
+		}
+		scb(status, data.users || data);
+	}, ecb);
 };

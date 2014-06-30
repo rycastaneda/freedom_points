@@ -65,7 +65,7 @@ exports.auth_google_callback = function (req, res, next) {
                     as_helper.get_access_token({
                         user_id : user.user_data._id,
                         scope_token : user.scope_token,
-                        scopes : user.user_data[config.app_id + '_data'].roles.map(function (a) {
+                        scopes : user.user_data['data_' + config.app_id].roles.map(function (a) {
 									return config.scopes[a];
 								}).join(',')
                     }, send_response);
@@ -99,7 +99,8 @@ exports.auth_google_callback = function (req, res, next) {
 
     // @override
     next = function (err) {
-        res.cookie('error', err);
+        logger.log('error', err)
+        res.cookie('error', err.message || JSON.stringify(err));
         res.redirect(config.frontend_server_url + '/error');
     };
 
@@ -107,11 +108,10 @@ exports.auth_google_callback = function (req, res, next) {
 };
 
 exports.info = function (req, res, next) {
+
     if (!req.access_token)
         return next('access_token is missing');
 
-	req.user.app_data = req.user_data;
-	delete req.user[config.app_id + '_data'];
     res.send(req.user);
 };
 

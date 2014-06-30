@@ -1,6 +1,7 @@
 var fs = require('fs'),
 	config = require(__dirname + '/../config/config'),
 	mysql = require(__dirname + '/../lib/mysql'),
+	logger = require(__dirname + '/../lib/logger'),
 	mongo = require(__dirname + '/../lib/mongoskin'),
 	util = require(__dirname + '/../helpers/util'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),
@@ -391,29 +392,43 @@ exports.download_proposal = function (req, res, next) {
 };
 
 exports.update_proposal = function (req, res, next) {
-	var allowed = ['Accepted', 'Rejected'],
+	var allowed = ['Approved', 'Rejected'],
 		get_user = function (status, data) {
 			if (status !== 200) return next(data);
 			as_helper.get_info({
 				access_token : req.access_token,
-				user_id : req.params.id,
-				self : false
+				user_id : req.params.id
 			}, update_user);
 		},
 		update_user = function (err, data) {
-			if (err) return next(err);
-			logger.log('info', 'User found')
-			console.dir(data);
+			if (err)
+				return next(err);
+			if (!data.app_data.network_application || data.app_data.network_application.status !== 'Pending')
+				return next('Proposal cannot be updated');
+
 			data.app_data.network_application.status = req.body.status;
 			as_helper.update_app_data({
 				user_id : req.params.id,
 				access_token : req.access_token,
 				app_data : data.app_data
+			}, update_scopes, next);
+		},
+		update_scopes = function (status, data) {
+			if (status !== 200)
+				return next(data);
+			if (req.body.status === 'Rejected')
+				return res.send({message : 'Proposal successfully updated'});
+
+			as_helper.add_scopes({
+		        access_token : req.access_token,
+		        user_id : req.params.id,
+		        scopes : config.scopes.network
 			}, send_response, next);
 		},
 		send_response = function (status, data) {
-			if (status !== 200) return next(data);
-			res.send('Proposal successfully updated');
+			if (status !== 200)
+				return next(data);
+			res.send({message : 'Proposal successfully updated'});
 		};
 
 	if (!req.access_token)

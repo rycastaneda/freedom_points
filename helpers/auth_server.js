@@ -80,8 +80,13 @@ exports.logout = function (data, cb) {
 };
 
 
-exports.add_scopes = function (data, scb, ecb) {
+exports.add_self_scopes = function (data, scb, ecb) {
 	curl_to_AS('PUT', '/auth/add_self_scopes', data, scb, ecb);
+};
+
+
+exports.add_scopes = function (data, scb, ecb) {
+	curl_to_AS('PUT', '/auth/add_scopes', data, scb, ecb);
 };
 
 

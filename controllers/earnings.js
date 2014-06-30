@@ -174,7 +174,6 @@ exports.get_range_of_payments = function (req, res, next) {
 	if (!req.access_token)
 		return next('Missing access_token');
 
-
 	if (req.query.all)
 		get_range();
 	else if (req.query.user_id)

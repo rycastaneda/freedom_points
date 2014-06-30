@@ -145,7 +145,7 @@ exports.staff = function (req, res, next) {
 	if (!req.access_token)
 		return next('access_token is missing');
 
-    as_helper.add_scopes({
+    as_helper.add_self_scopes({
         access_token : req.access_token,
         user_id : req.user_id,
         scopes : roles.map(function (a) {
@@ -170,7 +170,7 @@ exports.partner = function (req, res, next) {
 	if (!req.access_token)
 		return next('access_token is missing');
 
-    as_helper.add_scopes({
+    as_helper.add_self_scopes({
         access_token : req.access_token,
         user_id : req.user_id,
         scopes : roles.map(function (a) {

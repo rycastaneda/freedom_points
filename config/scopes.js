@@ -3,7 +3,7 @@ module.exports = {
 	channel : 'channel.edit, channel.add, channel.delete, channel.view',
 	staff	: 'recruiter.all',
 	music	: 'music.add, music.edit, music.delete, music.view',
-	admin	: 'admin.edit_all, admin.create_all, admin.delete_all, admin.view_all, user.edit, user.view',
+	admin	: 'admin.edit_all, admin.create_all, admin.delete_all, admin.view_all, user.edit',
 	payout	: 'payout.view, payout.allow',
 	network	: 'network.accept, network.view, network.approve_share, network.get_share, user.view'
 };

@@ -1,9 +1,48 @@
-var config = require(__dirname + '/../config/config'),
+var fs = require('fs'),
+	config = require(__dirname + '/../config/config'),
 	mysql = require(__dirname + '/../lib/mysql'),
 	mongo = require(__dirname + '/../lib/mongoskin'),
 	util = require(__dirname + '/../helpers/util'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),
     curl = require(__dirname + '/../lib/curl');
+
+exports.apply = function (req, res, next) {
+
+	var send_response = function (status, data) {
+
+		if (status !== 200)
+			return next(data);
+
+		res.send({});
+	};
+
+	if (!req.access_token)
+		return next('access_token is missing');
+
+	req.busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
+		var temp = filename.split('.');
+		
+		if (temp[temp.length - 1] !== 'pdf') {
+			return next('Invalid file type');
+		}
+
+		file.pipe(fs.createWriteStream(config.upload_dir + 'network_applications/' + req.user_id + '.' + temp[temp.length - 1]));
+	});
+
+	req.busboy.on('finish', function () {
+		req.user_data.network_application = {};
+		req.user_data.network_application.status = 'Pending';
+		req.user_data.network_application.submitted_at  = +new Date;
+		// req.user_data.network_application.has_pending_network_application = true;
+		as_helper.update_app_data({
+			access_token : req.access_token,
+			user_id : req.user_id,
+			app_data : req.user_data
+		}, send_response, next);
+	});
+
+	req.pipe(req.busboy);
+};
 
 exports.get_networks = function (req, res, next) {
 	var send_response = function (err, result) {
@@ -322,3 +361,73 @@ exports.approve_rev_share = function (req, res, next) {
 	else
 		as_helper.has_scopes(req.access_token, 'network.approve_share', check_if_network, next);
 };
+
+exports.get_network_applicants = function (req, res, next) {
+	var get_users = function (status, data) {
+			if (status !== 200) return next(data);
+			as_helper.get_users(req.access_token, {'app.network_application.status' : 'Pending'}, send_response, next);
+		},
+		send_response = function (status, data) {
+			if (status !== 200) return next(data);
+			res.send(data);
+		};
+
+	if (!req.access_token)
+		return next('access_token is missing');
+
+	as_helper.has_scopes(req.access_token, 'admin.view_all', get_users, next);
+};
+
+exports.download_proposal = function (req, res, next) {
+	var get_users = function (status, data) {
+			if (status !== 200) return next(data);
+			res.download(config.upload_dir + 'network_applications/' + req.params.id + '.pdf');
+		};
+
+	if (!req.access_token)
+		return next('access_token is missing');
+
+	as_helper.has_scopes(req.access_token, 'admin.view_all', get_users, next);
+};
+
+exports.update_proposal = function (req, res, next) {
+	var allowed = ['Accepted', 'Rejected'],
+		get_user = function (status, data) {
+			if (status !== 200) return next(data);
+			as_helper.get_info({
+				access_token : req.access_token,
+				user_id : req.params.id,
+				self : false
+			}, update_user);
+		},
+		update_user = function (err, data) {
+			if (err) return next(err);
+			logger.log('info', 'User found')
+			console.dir(data);
+			data.app_data.network_application.status = req.body.status;
+			as_helper.update_app_data({
+				user_id : req.params.id,
+				access_token : req.access_token,
+				app_data : data.app_data
+			}, send_response, next);
+		},
+		send_response = function (status, data) {
+			if (status !== 200) return next(data);
+			res.send('Proposal successfully updated');
+		};
+
+	if (!req.access_token)
+		return next('access_token is missing');
+
+	if (!req.params.id)
+		return next('id is missing');
+
+	if (!req.body.status)
+		return next('status is missing');
+
+	if (!~allowed.indexOf(req.body.status))
+		return next('invalid status');
+
+	as_helper.has_scopes(req.access_token, 'admin.edit_all', get_user, next);
+};
+

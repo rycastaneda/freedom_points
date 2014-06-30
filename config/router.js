@@ -44,6 +44,11 @@ module.exports = function (router, logger) {
 	router.delete('/prospect/delete', prospect.delete_prospects);
 
 	//network related routes
+	router.post('/network/apply', network.apply);
+	router.get('/network/networks', network.get_network_applicants);
+	router.get('/network/proposal/:id', network.download_proposal);
+	router.put('/proposal/:id', network.update_proposal);
+	
 	router.get('/networks', network.get_networks);
 	router.get('/network/applicants', network.get_channel_applicants);
 	router.post('/network/applicant', network.accept_channel_applicant);

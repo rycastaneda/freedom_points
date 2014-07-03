@@ -9,6 +9,7 @@ var path = require('path'),
 			logs_dir : path.normalize(__dirname + '/../logs/'),
 			temp_dir : path.normalize(__dirname + '/../temp'),
 			frontend_server_url : 'http://dev.freedom.tm:8000',
+			frontend_server_register_callback : '/auth/register/callback',
 			auth_server : {
 				host : 'ec2-54-214-176-172.us-west-2.compute.amazonaws.com',
 				port : 80

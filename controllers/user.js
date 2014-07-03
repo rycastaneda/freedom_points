@@ -58,8 +58,7 @@ exports.auth_google_callback = function (req, res, next) {
                 case 1 :
                     if (~user.email.indexOf('@pages.plusgoogle.com'))
                         user.email = '';
-                    res.cookie('data', JSON.stringify(user));
-                    res.redirect(config.frontend_server_url + '/auth/register');
+                    res.redirect(config.frontend_server_url + config.frontend_server_register_callback + '?data=' + JSON.stringify(user));
             }
         },
         login_to_AS = function (err, response) {

@@ -8,7 +8,7 @@ var path = require('path'),
 			upload_dir : path.normalize(__dirname + '/../uploads/'),
 			logs_dir : path.normalize(__dirname + '/../logs/'),
 			temp_dir : path.normalize(__dirname + '/../temp'),
-			frontend_server_url : 'http://localhost:8001',
+			frontend_server_url : 'http://dev.freedom.tm:8000',
 			auth_server : {
 				host : 'ec2-54-214-176-172.us-west-2.compute.amazonaws.com',
 				port : 80
@@ -31,7 +31,7 @@ var path = require('path'),
 			google_auth : {
 				client_id 		: '24383833659-b01c43an5ppdu347io4tdfuihc1q6q91.apps.googleusercontent.com',
 				client_secret 	: 'CRUTm9nhLbv8p8RPY3qkNJky',
-				callback_URL 	: 'http://localhost:8000/auth/callback'
+				callback_URL 	: 'http://dev.freedomnode.tm:8000/auth/callback'
 			},
 			db_freedom : {
 				host : 'localhost',

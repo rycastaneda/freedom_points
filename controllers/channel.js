@@ -10,7 +10,7 @@ var moment = require('moment'),
 	oauth2_client = new OAuth2(config.google_auth.client_id, config.google_auth.client_secret, config.google_auth.callback_URL);
 
 
-exports.auth_channel = function (req, res, next) {
+exports.google_auth = function (req, res, next) {
 
 	if (!req.access_token)
 		return next('access_token is missing');
@@ -341,88 +341,7 @@ exports.get_channels = function (req, res, next) {
 	as_helper.has_scopes(req.access_token, 'channel.view', get_from_db, next);
 };
 
-
-exports.search = function (req, res, next) {
-	var data = {},
-		get_first_video = function (status, _data) {
-			if (status !== 200)
-				return res.send(status, _data);
-			data.search_result = _data;
-			if (_data.items.length === 0)
-				return send_response();
-			data.search_result.items[0].scm = null;
-			curl.get
-				.to('www.googleapis.com', 443, '/youtube/v3/search')
-				.secured()
-				.send({
-					part : 'snippet',
-					type : 'video',
-					sort : 'date',
-					channelId : _data.items[0].id,
-					maxResults : 1,
-					fields : 'items(id/videoId)',
-					key : config.google_api_key
-				})
-				.then(get_scm)
-				.onerror(next);
-		},
-		get_scm = function (status, _data) {
-			if (status !== 200)
-				return res.send(status, _data);
-			if (_data.items.length === 0)
-				return check_db(200);
-			curl.get
-				.to('www.youtube.com', 443, '/watch')
-				.raw()
-				.secured()
-				.send({v : _data.items[0].id.videoId})
-				.then(check_db)
-				.onerror(next);
-		},
-		check_db = function (status, raw) {
-			var match;
-			if (status !== 200)
-				return res.send(status, raw);
-			if (raw) {
-				match = raw.match(/\<meta name=(\")?attribution(\")?(\s*)content=(.{1,50})\>/gi);
-				if (match && match[0]) {
-					match = match[0].substring(31);
-					data.search_result.items[0].scm = match.substring(0, match.length - 2);
-				}
-			}
-			mysql.open(config.db_freedom)
-				.query('SELECT recruiter_id, recruiter_email, status, note, created_at FROM prospects WHERE username = ?', req.query.key || req.params.key, send_response)
-				.end();
-		},
-		send_response = function (err, result) {
-			data.self = false;
-			data.is_recruited = result || [];
-			if (err) return next(err);
-			if (result && result.filter(function (a) {
-								return a.recruiter_id === req.user_id;
-							}).length > 0)
-				data.self = true;
-			res.send(data);
-		};
-
-	if (!req.access_token)
-		return next('access_token is missing');
-
-	curl.get
-		.to('www.googleapis.com', 443, '/youtube/v3/channels')
-		.secured()
-		.send({
-			part : 'id, snippet, statistics',
-			forUsername : req.query.key || req.params.key,
-			maxResults : 1,
-			fields : 'items(id, snippet/title, snippet/publishedAt, snippet/thumbnails/default, statistics/viewCount, statistics/subscriberCount, statistics/videoCount)',
-			key : config.google_api_key
-		})
-		.then(get_first_video)
-		.onerror(next);
-};
-
-exports.get_analytics = function (req, res, next) {
+exports.get_channel = function (req, res, next) {
 	var data = {},
 		bearer,
 		published_at,
@@ -603,41 +522,3 @@ exports.get_analytics = function (req, res, next) {
 	get_published_at();
 };
 
-
-// mga nilagay ni ninz
-
-/*
-//channel related operations, kelangan ng authentication from google para makapagperform ng edit
-//nakalagay yung access token na gagamitin for each channel dun sa respective table rows nila
-function editVideo(video_id, next ) {
-
-
-};
-
-function editPlaylist( playlist_id, next ) {
-
-
-};
-
-function editChannelInfo( channel_id, next ) {
-
-
-};
-
-exports.getChannelStats = function(req,res,next) {
-
-
-};
-
-exports.addChannelToUser = function(req,res,next) {
-
-
-};
-
-//will just return the stats of each channel associated with the logged in user
-exports.leaderBoardPerUser = function(req,res,next) {
-	var data = util.chk_rqd(['user_id'], req.body, next);
-
-
-};
- */

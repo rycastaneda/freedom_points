@@ -7,6 +7,20 @@ var fs = require('fs'),
 	as_helper = require(__dirname + '/../helpers/auth_server'),
     curl = require(__dirname + '/../lib/curl');
 
+exports.get_networks = function (req, res, next) {
+	var send_response = function (err, result) {
+		if (err) return next(err);
+		res.send(result);
+	};
+
+	if (!req.access_token)
+		return next('access_token is missing');
+
+	mysql.open(config.db_freedom)
+		.query('SELECT _id, name FROM network', send_response)
+		.end();
+};
+
 exports.apply = function (req, res, next) {
 
 	var send_response = function (status, data) {
@@ -43,20 +57,6 @@ exports.apply = function (req, res, next) {
 	});
 
 	req.pipe(req.busboy);
-};
-
-exports.get_networks = function (req, res, next) {
-	var send_response = function (err, result) {
-		if (err) return next(err);
-		res.send(result);
-	};
-
-	if (!req.access_token)
-		return next('access_token is missing');
-
-	mysql.open(config.db_freedom)
-		.query('SELECT _id, name FROM network', send_response)
-		.end();
 };
 
 exports.get_channel_applicants = function (req, res, next) {
@@ -423,7 +423,14 @@ exports.update_proposal = function (req, res, next) {
 		        access_token : req.access_token,
 		        user_id : req.params.id,
 		        scopes : config.scopes.network
-			}, send_response, next);
+			}, insert_to_db, next);
+		},
+		insert_to_db = function (status, data) {
+			if (status !== 200)
+				return next(data);
+			mysql.open(config.db_freedom)
+				.query('INSERT INTO network() VALUES ', send_response)
+				.end();
 		},
 		send_response = function (status, data) {
 			if (status !== 200)

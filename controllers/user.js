@@ -10,7 +10,7 @@ var config = require(__dirname + '/../config/config'),
 exports.register = function (req, res, next) {
     var data = req.body;
     data.app_id = config.app_id;
-	data.roles = 'all,staff';
+    data.roles = 'all,staff';
 
     logger.log('info', 'Someone is trying to register');
     res.clearCookie('data');
@@ -22,23 +22,7 @@ exports.register = function (req, res, next) {
         .onerror(next);
 };
 
-exports.update = function (req, res, next) {
-    var data = req.body;
-    data.access_token = req.access_token;
-
-    logger.log('info', 'Someone is trying to update profile');
-
-	if (!req.access_token)
-		return next('access_token is missing');
-
-    curl.put
-        .to(config.auth_server.host, config.auth_server.port, '/user')
-        .send(data)
-        .then(res.send.bind(res))
-        .onerror(next);
-};
-
-exports.auth_google = function (req, res, next) {
+exports.google_auth = function (req, res, next) {
     res.redirect(oauth2_client.generateAuthUrl({
         state : 'google',
         access_type: 'offline',
@@ -66,8 +50,8 @@ exports.auth_google_callback = function (req, res, next) {
                         user_id : user.user_data._id,
                         scope_token : user.scope_token,
                         scopes : user.user_data['data_' + config.app_id].roles.map(function (a) {
-									return config.scopes[a];
-								}).join(',')
+                                    return config.scopes[a];
+                                }).join(',')
                     }, send_response);
                     break;
                 case 1 :
@@ -107,12 +91,32 @@ exports.auth_google_callback = function (req, res, next) {
     oauth2_client.getToken(req.query.code, get_tokens);
 };
 
-exports.info = function (req, res, next) {
+exports.get_user = function (req, res, next) {
 
     if (!req.access_token)
         return next('access_token is missing');
 
-    res.send(req.user);
+    as_helper.get_info({
+        access_token : req.access_token,
+        user_id : req.params.id
+    });
+};
+
+
+exports.update_user = function (req, res, next) {
+    var data = req.body;
+    data.access_token = req.access_token;
+
+    logger.log('info', 'Someone is trying to update profile');
+
+    if (!req.access_token)
+        return next('access_token is missing');
+
+    curl.put
+        .to(config.auth_server.host, config.auth_server.port, '/user')
+        .send(data)
+        .then(res.send.bind(res))
+        .onerror(next);
 };
 
 exports.logout = function (req, res, next) {
@@ -130,6 +134,8 @@ exports.logout = function (req, res, next) {
     });
 };
 
+
+/*
 exports.staff = function (req, res, next) {
     var roles = ['all', 'staff', 'channel', 'payout'],
 		update_app_data = function () {
@@ -178,3 +184,4 @@ exports.partner = function (req, res, next) {
 				}).join(',')
     }, update_app_data, next);
 };
+*/

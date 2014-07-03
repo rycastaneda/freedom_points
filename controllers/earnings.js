@@ -8,7 +8,7 @@ var config = require(__dirname + '/../config/config'),
 	mysql = require(__dirname + '/../lib/mysql'),
 	mongo = require(__dirname + '/../lib/mongoskin');
 
-exports.get_channel_earnings = function (req, res, next) {
+exports.get_channels_earnings = function (req, res, next) {
 	var data = util.get_data(['report_id'], [], req.query),
 		scopes = 'payout.view',
 		report_ids = [],

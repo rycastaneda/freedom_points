@@ -31,7 +31,7 @@ var path = require('path'),
 			google_auth : {
 				client_id 		: '24383833659-b01c43an5ppdu347io4tdfuihc1q6q91.apps.googleusercontent.com',
 				client_secret 	: 'CRUTm9nhLbv8p8RPY3qkNJky',
-				callback_URL 	: 'http://dev.freedomnode.tm:8000/auth/callback'
+				callback_URL 	: 'http://api.freedom.tm:8000/auth/callback'
 			},
 			db_freedom : {
 				host : 'localhost',

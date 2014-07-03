@@ -3,6 +3,7 @@ var config = require(__dirname + '/../config/config'),
     logger = require(__dirname + '/../lib/logger'),
     curl = require(__dirname + '/../lib/curl'),
     as_helper = require(__dirname + '/../helpers/auth_server'),
+    util = require(__dirname + '/../helpers/util'),
     googleapis = require('googleapis'),
     OAuth2 = googleapis.auth.OAuth2,
 	oauth2_client = new OAuth2(config.google_auth.client_id, config.google_auth.client_secret, config.google_auth.callback_URL);
@@ -89,6 +90,22 @@ exports.auth_google_callback = function (req, res, next) {
     };
 
     oauth2_client.getToken(req.query.code, get_tokens);
+};
+
+exports.login = function (req, res, next) {
+    var data = util.get_data(['email', 'password'], [], req.body);
+
+    if (typeof data === 'string')
+        return next(data);
+
+    data.source = 'self';
+    data.app_id = config.app_id;
+
+    curl.post
+        .to(config.auth_server.host, config.auth_server.port, '/auth/login')
+        .send(data)
+        .then(res.send.bind(res))
+        .onerror(next);
 };
 
 exports.get_user = function (req, res, next) {

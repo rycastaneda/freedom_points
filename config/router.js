@@ -7,56 +7,55 @@ var user = require(__dirname + '/../controllers/user'),
 
 module.exports = function (router, logger) {
 
-	//user related routes
-	router.get('/user', user.info);
-	router.put('/user', user.update);
-	router.get('/logout', user.logout);
 	router.post('/register', user.register);
-	router.get('/auth/google', user.auth_google);
-
-	// choose class
-	router.post('/staff', user.staff);
-	router.post('/partner', user.partner);
-
-	// channel related routes
-	router.get('/channel/search/:key', channel.search);
-	router.get('/channels', channel.get_channels);
-	router.get('/channel/add', channel.auth_channel);
-	router.get('/channel/:id/analytics', channel.get_analytics);
-	router.post('/channel/add', channel.add_channel);
-
-	// admin
-	router.get('/admin/applicants', admin.find_applicants);
-	router.post('/admin/applicant', admin.accept_applicant);
+	router.get('/google_auth', user.google_auth);
+	// router.post('/login', user.login);
+	router.get('/user/:id', user.get_user);
+	router.put('/user', user.update_user);
+	router.get('/logout', user.logout);
+	// router.get('/recruits', user.get_recruits);
+	// router.get('/activities', user.activities);
 
 
-	//earnings related routes
-	router.get('/earnings/date_range', earnings.get_range_of_payments);
-	router.get('/earnings/channel', earnings.get_channel_earnings);
-	router.get('/earnings/recruits', earnings.get_recruiter_earnings);
-	router.get('/earnings/network', earnings.get_networks_earnings);
-	router.get('/earnings/generate_sum', earnings.generate_summed_payouts);
-
-	//prospect related routes
+	router.post('/prospect', prospect.add_prospect);
 	router.get('/prospects', prospect.get_prospects);
-	router.post('/prospect/add', prospect.add_prospect);
-	router.put('/prospect/update', prospect.update_prospect);
-	router.delete('/prospect/delete', prospect.delete_prospects);
+	router.put('/prospect/:id', prospect.update_prospect);
+	router.delete('/prospects', prospect.delete_prospects);
+	router.get('/prospect/search/:key', prospect.search);
 
-	//network related routes
-	router.post('/network/apply', network.apply);
-	router.get('/network/networks', network.get_network_applicants);
-	router.get('/network/proposal/:id', network.download_proposal);
-	router.put('/proposal/:id', network.update_proposal);
+
+	// router.post('/apply/:type', applicant.add_applicant);
+	// router.get('/applicants/:type', applicant.get_applicants);
+	// router.put('/applicant/:id', applicant.update_applicant);
+	// router.get('/applicant/:id/download', network.download_applicant_proposal);
+
+	
+	router.get('/channel/google_auth', channel.google_auth);
+	router.post('/channel', channel.add_channel);
+	router.get('/channels', channel.get_channels);
+	router.get('/channel/:id', channel.get_channel);
+	// router.put('/channel/partner/:id', channel.partner_channel);
+
 	
 	router.get('/networks', network.get_networks);
-	router.get('/network/applicants', network.get_channel_applicants);
-	router.post('/network/applicant', network.accept_channel_applicant);
+	//router.put('/network/:id', network.update_network);
+	// router.get('/network/channels', network.get_channels);
+	// router.delete('/network/channel/:id, network.delete_channel');
+	// router.get('/network/recruiters', network.get_recruiters);
+	// router.get('/network/recruiters/prospects', network.get_recruiters_prospects);
 
-	// approve share
-	router.get('/network/shares', network.view_rev_share);
-	router.post('/network/share', network.approve_rev_share);
 
+	// router.post('/sponsor/:id', sponsor.add_sponsor);
+	// router.get('/sponsored_networks', sponsor.get_sponsored_network);
+	// router.get('/sponsored_network/:id/revenue', sponsor.get_sponsored_network_revenue);
+
+
+	router.get('/earnings/recruits', earnings.get_recruiter_earnings);
+	router.get('/earnings/channels', earnings.get_channels_earnings);
+	router.get('/earnings/network', earnings.get_networks_earnings);
+	router.get('/earnings/date_range', earnings.get_range_of_payments);
+	router.get('/earnings/generate_sum', earnings.generate_summed_payouts);
+	
 
 	router.get('/auth/callback', function (req, res, next) {
 		if (req.query.state === 'google')
@@ -87,3 +86,4 @@ module.exports = function (router, logger) {
 
 	return router;
 };
+

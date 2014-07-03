@@ -64,14 +64,14 @@ exports.get_access_token = function (data, cb) {
 
 exports.get_info = function (data, cb) {
 	curl_to_AS('GET', '/user', data,
-	function (status, data) {
-		if (status === 200 && data.users.length === 1) {
-			data.users[0].app_data = data.users[0]['data_' + config.app_id];
-			delete data.users[0]['data_' + config.app_id];
-			return cb(null, data.users[0]);
-		}
-		cb(JSON.stringify(data));
-	},
+		function (status, data) {
+			if (status === 200 && data.users.length === 1) {
+				data.users[0].app_data = data.users[0]['data_' + config.app_id];
+				delete data.users[0]['data_' + config.app_id];
+				return cb(null, data.users[0]);
+			}
+			cb(JSON.stringify(data));
+		},
 	cb);
 };
 

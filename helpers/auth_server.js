@@ -9,25 +9,18 @@ var config = require(__dirname + '/../config/config'),
 			.onerror(ecb);
 	};
 
-exports.login = function (profile, access_token, refresh_token, done) {
+exports.login = function (profile, done) {
 	curl_to_AS('POST', '/auth/login', {
 		email : profile.email || profile.emails[0],
 		app_id : config.app_id,
 		source : 'google',
-		google_access_token : access_token
+		google_access_token : profile.access_token
 	}, function (status, _data) {
 		switch (status) {
 			case 200 : return done(null, _data, 0);			// login successful
-			case 404 : return done(null, {					// register
-				email : profile.email || profile.emails[0],
-				google_refresh_token : refresh_token,
-				fname : profile.given_name || '',
-				lname : profile.family_name || '',
-				avatar : profile.picture
-			}, 1);
+			case 404 : return done(null, profile, 1);
 		}
-
-		done(data);				// error
+		done(data);
 	},
 	done);
 };

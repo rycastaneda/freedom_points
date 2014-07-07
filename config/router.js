@@ -1,9 +1,10 @@
 var user = require(__dirname + '/../controllers/user'),
-	channel = require(__dirname + '/../controllers/channel'),
-	prospect = require(__dirname + '/../controllers/prospect'),
 	admin = require(__dirname + '/../controllers/admin'),
+	channel = require(__dirname + '/../controllers/channel'),
+	network = require(__dirname + '/../controllers/network'),
 	earnings = require(__dirname + '/../controllers/earnings'),
-	network = require(__dirname + '/../controllers/network');
+	prospect = require(__dirname + '/../controllers/prospect'),
+	applicant = require(__dirname + '/../controllers/applicant');
 
 module.exports = function (router, logger) {
 
@@ -24,10 +25,10 @@ module.exports = function (router, logger) {
 	router.get('/prospect/search/:key', prospect.search);
 
 
-	// router.post('/apply/:type', applicant.add_applicant);
-	// router.get('/applicants/:type', applicant.get_applicants);
-	// router.put('/applicant/:id', applicant.update_applicant);
-	// router.get('/applicant/:id/download', network.download_applicant_proposal);
+	router.post('/apply/:type', applicant.add_applicant);
+	router.get('/applicants/:type', applicant.get_applicants);
+	router.put('/applicant/:id', applicant.update_applicant);
+	router.get('/applicant/:id/download', applicant.download_applicant_proposal);
 
 	
 	router.get('/channel/google_auth', channel.google_auth);

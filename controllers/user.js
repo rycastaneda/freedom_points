@@ -39,8 +39,7 @@ exports.auth_google_callback = function (req, res, next) {
     var tokens,
         send_response = function (err, data) {
             if (err) return next(err);
-            res.cookie('access_token', data, { signed : true });
-            res.redirect(config.frontend_server_url + '/overview');
+            res.redirect(config.frontend_server_url + config.frontend_server_register_callback + '?access_token=' + data);
         },
         done = function (err, user, info) {
             if (err) return next(err);
@@ -56,14 +55,30 @@ exports.auth_google_callback = function (req, res, next) {
                     }, send_response);
                     break;
                 case 1 :
-                    if (~user.email.indexOf('@pages.plusgoogle.com'))
-                        user.email = '';
-                    res.redirect(config.frontend_server_url + config.frontend_server_register_callback + '?data=' + JSON.stringify(user));
+                    curl.post
+                        .to(config.auth_server.host, config.auth_server.port, '/user/register')
+                        .send({                 // register
+                            app_id : config.app_id,
+                            roles : 'all,staff',
+                            email : user.email || user.emails[0],
+                            google_refresh_token : user.refresh_token,
+                            fname : user.given_name || '',
+                            lname : user.family_name || '',
+                            avatar : user.picture
+                        })
+                        .then(function (status, data) {
+                            if (status != 200)
+                                login_to_AS(data);
+                            login_to_AS(null, user);
+                        })
+                        .onerror(next);
             }
         },
         login_to_AS = function (err, response) {
             if (err) return next(err);
-            as_helper.login(response, tokens.access_token, tokens.refresh_token, done)
+            response.access_token = response.access_token || tokens.access_token;
+            response.refresh_token = response.refresh_token || tokens.refresh_token;
+            as_helper.login(response, done);
         },
         get_client = function (err, client) {
             if (err) return next(err);
@@ -83,7 +98,7 @@ exports.auth_google_callback = function (req, res, next) {
 
     // @override
     next = function (err) {
-        logger.log('error', err)
+        logger.log('error', err);
         res.cookie('error', err.message || JSON.stringify(err));
         res.redirect(config.frontend_server_url + '/error');
     };

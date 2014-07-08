@@ -39,7 +39,7 @@ exports.auth_google_callback = function (req, res, next) {
     var tokens,
         send_response = function (err, data) {
             if (err) return next(err);
-            res.redirect(config.frontend_server_url + config.frontend_server_register_callback + '?access_token=' + data);
+            res.redirect(config.frontend_server_url + config.frontend_server_register_callback + '?access_token=' + (data.access_token || data));
         },
         done = function (err, user, info) {
             if (err) return next(err);
@@ -49,9 +49,7 @@ exports.auth_google_callback = function (req, res, next) {
                     as_helper.get_access_token({
                         user_id : user.user_data._id,
                         scope_token : user.scope_token,
-                        scopes : user.user_data['data_' + config.app_id].roles.map(function (a) {
-                                    return config.scopes[a];
-                                }).join(',')
+                        scopes : 'user'
                     }, send_response);
                     break;
                 case 1 :
@@ -59,7 +57,7 @@ exports.auth_google_callback = function (req, res, next) {
                         .to(config.auth_server.host, config.auth_server.port, '/user/register')
                         .send({                 // register
                             app_id : config.app_id,
-                            roles : 'all,staff',
+                            scopes : 'self.view,self.edit,self.delete',
                             email : user.email || user.emails[0],
                             google_refresh_token : user.refresh_token,
                             fname : user.given_name || '',
@@ -68,8 +66,8 @@ exports.auth_google_callback = function (req, res, next) {
                         })
                         .then(function (status, data) {
                             if (status != 200)
-                                login_to_AS(data);
-                            login_to_AS(null, user);
+                                send_response(data);
+                            send_response(null, user);
                         })
                         .onerror(next);
             }
@@ -98,7 +96,8 @@ exports.auth_google_callback = function (req, res, next) {
 
     // @override
     next = function (err) {
-        logger.log('error', err);
+        console.dir(err);
+        console.log(err.stack);
         res.cookie('error', err.message || JSON.stringify(err));
         res.redirect(config.frontend_server_url + '/error');
     };
@@ -123,14 +122,19 @@ exports.login = function (req, res, next) {
 };
 
 exports.get_user = function (req, res, next) {
+    var send_response = function (err, data) {
+            if (err) return next(err);
+            res.send(data);
+       };
 
     if (!req.access_token)
         return next('access_token is missing');
 
     as_helper.get_info({
         access_token : req.access_token,
-        user_id : req.params.id
-    });
+        user_id : req.params.id,
+        self : true
+    }, send_response);
 };
 
 

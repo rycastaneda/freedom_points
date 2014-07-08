@@ -11,7 +11,7 @@ module.exports = function (router, logger) {
 	router.post('/register', user.register);
 	router.get('/google_auth', user.google_auth);
 	router.post('/login', user.login);
-	router.get('/user/:id', user.get_user);
+	router.get('/user/:id?', user.get_user);
 	router.put('/user', user.update_user);
 	router.get('/logout', user.logout);
 	// router.get('/recruits', user.get_recruits);

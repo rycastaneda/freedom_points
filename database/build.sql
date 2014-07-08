@@ -73,7 +73,7 @@ CREATE TABLE network (
 	reject_email_message TEXT,
 	description TEXT,
 	tags varchar(255),
-	banner varchar(255),
+	banner varchar(1024),
 	created_at bigint(15)  not null,
 	updated_at bigint(15),
 	PRIMARY KEY (_id)

@@ -1,0 +1,103 @@
+<dom-module id="search-bar">
+    <template>
+        <style>
+            :host {
+                display: inline-block;
+                vertical-align: middle;
+                background-color: var(--paper-grey-50);
+                position: relative;
+                border-radius: 3px;
+                width: 50%;
+            }
+            .search-box paper-icon-button {
+                color: var(--google-grey-500);
+                position: absolute;
+                left: 0;
+            }
+            .search-box input {
+                vertical-align: middle;
+                background: none;
+                border: none;
+                font-size: 16px;
+                line-height: 2.5;
+                padding-left: 35px;
+                width: 100%;
+            }
+            .search-box input:focus {
+                outline: 0;
+            }
+            paper-listbox.list {
+                position: absolute;
+                top: 40px;
+                background-color: #fafafa;
+                color: #000;
+                padding: 0;
+                width: 100%;
+                z-index: 1;
+            }
+            paper-item.autocomplete-items {
+                --paper-item-min-height: 28px;
+            }
+        </style>
+            <iron-ajax
+                id="autocomplete"
+                handle-as="json"
+                last-response="{{autocompleteResults}}"
+                on-response="resultsHandler"
+                debounce-duration="300"></iron-ajax>
+            <div class="search-box">
+                <paper-icon-button icon="search" on-tap="autocompleteSearch"></paper-icon-button>
+                <!-- <input type="search" placeholder="Search"> -->
+                <input id="search-input"
+                    name="search"
+                    list="search"
+                    type="search"
+                    placeholder="Search"
+                    on-blur="onBlurSearch"
+                    on-focus="autocompleteSearch"
+                    on-input="autocompleteSearch">
+                    <paper-listbox class="list" selectable recieved-focus-from-keyboard>
+                        <template is="dom-repeat" items="{{autocompleteResults.data}}">
+                            <paper-item class="autocomplete-items">{{item}}</paper-item>
+                        </template>
+                    </paper-listbox>
+            </div>
+    </template>
+
+    <script>
+        (function () {
+            'use strict';
+
+            Polymer({
+                is: 'search-bar',
+                properties: {
+                    type: String,
+                    selected: Number
+                },
+                ready: function () {
+                    window.addEventListener('keydown', function (e) {
+                        // space and arrow keys
+                        if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+                            e.preventDefault();
+                        }
+                    }, false);
+                },
+                onBlurSearch: function () {
+                    this.autocompleteResults = [];
+                },
+                resultsHandler: function (data) {
+                    this.autocompleteResults = data.detail.response;
+                },
+                autocompleteSearch: function (e) {
+                    var query = e.target.value;
+                    if (query) {
+                        this.$.autocomplete.url = window.Polymer.config.backend_url + '/search/autocomplete';
+                        this.$.autocomplete.params = {'query': query, 'entries':'10'};
+                        this.$.autocomplete.generateRequest();
+                    }
+                }
+            });
+        })();
+    </script>
+
+</dom-module>

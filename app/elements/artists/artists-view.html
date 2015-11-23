@@ -1,0 +1,61 @@
+<dom-module id="artists-view">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 90%;
+                margin: auto;
+                text-align: justify;
+            }
+        </style>
+            <iron-ajax
+                id="artists"
+                auto
+                params='{"page":"1", "entries":"20"}'
+                handle-as="json"
+                last-response="{{allArtists}}"
+                on-response="allArtistsHandler"
+                debounce-duration="300"></iron-ajax>
+            <iron-signals on-iron-signal-scrolled="handleScroll"></iron-signals>
+            <template is="dom-repeat" items="{{artistResults}}" as="artist">
+                <artist-item artist="{{artist}}"></artist-item>
+            </template>
+    </template>
+    <script>
+        Polymer({
+            is: 'artists-view',
+            properties: {
+                page: {
+                    type: Number,
+                    value: 1
+                },
+                artistResults: {
+                    type: Array,
+                    value: []
+                },
+                tab: {
+                    observer: 'tabChanged'
+                }
+            },
+            listeners: {
+                'scrolled': 'handleScroll'
+            },
+            tabChanged: function () {
+                this.$.artists.url = window.Polymer.config.backend_url + '/artist/all';
+            },
+            handleScroll: function (e) {
+                if ((e.detail.container.scrollTop + e.detail.container.offsetHeight >= e.detail.container.scrollHeight) && e.detail.tab === 2) {
+                    this.page++;
+                    this.$.artists.params = {'page': this.page, 'entries':'20', 'include_private':'0'};
+                }
+            },
+            allArtistsHandler: function () {
+                _.map(this.allArtists.data.results, function (item) {
+                    this.push('artistResults', item);
+                    item.rating = item.rating ? item.rating : 0;
+                    item.picture = item.picture ? item.picture : '/images/cover-art.png';
+                }.bind(this));
+            },
+        });
+    </script>
+</dom-module>

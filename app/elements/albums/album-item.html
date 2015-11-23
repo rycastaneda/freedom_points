@@ -1,0 +1,64 @@
+<dom-module id="album-item">
+    <template>
+        <style>
+            :host {
+                min-width: 15vw;
+                width: calc(50% - 100px);
+                min-width: 265px;
+                --paper-card: {
+                    width: 23%;
+                    margin: 5px;
+                };
+                --paper-card-content: {
+                    text-align: left;
+                };
+                --paper-card-actions: {
+                    text-align: right;
+                    padding: 0;
+                };
+            }
+
+            .card-actions paper-button {
+                @apply(--actions-button);
+            }
+            .title {
+                @apply(--title);
+            }
+            .subtitle {
+                @apply(--subtitle);
+            }
+            .rating {
+                @apply(--rating);
+            }
+        </style>
+        <paper-card image="{{album.cover}}" on-tap="goToAlbum" data-args="{{album.album_id}}">
+            <div class="card-content">
+                <paper-button class="rating" raised>{{album.rating}}</paper-button>
+                <span class="title">{{album.name}}</span>
+                <span class="subtitle">{{album.artist}}</span>
+            </div>
+            <div class="card-actions">
+                <paper-button>
+                    <iron-icon class="add-to-playlist" icon="av:playlist-add"></iron-icon>
+                </paper-button>
+                <paper-button>
+                    <iron-icon class="tags" icon="icons:add-box"></iron-icon>
+                </paper-button>
+                <paper-button>
+                    <iron-icon class="download" icon="icons:file-download"></iron-icon>
+                </paper-button>
+                <paper-button>
+                    <iron-icon class="play" icon="av:play-circle-outline"></iron-icon>
+                </paper-button>
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        Polymer({
+            is: 'album-item',
+            goToAlbum: function () {
+                page('/album/' + this.album.album_id);
+            }
+        });
+    </script>
+</dom-module>

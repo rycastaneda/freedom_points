@@ -1,0 +1,426 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+
+<dom-module id="f-auplayer">
+  <template>
+
+    <style>
+        :host {
+            display: block;
+            margin: auto;
+            position: fixed;
+            bottom: 0;
+            box-sizing: border-box;
+            width: 100%;
+            font-family: 'Roboto Mono', 'Helvetica Neue', Arial, sans-serif;
+        }
+        #wrapper {
+            position: relative;
+            cursor: pointer;
+            height: 50px;
+            box-shadow: 0 1px 2px rgba(0,0,0,.3);
+        }
+        #left,
+        #right {
+            height: 50px;
+            position: relative;
+        }
+        #left {
+            background-color: var(--f-auplayer-color);;
+            padding: 10px 5px 5px 15px;
+            width: 120px;
+        }
+        #left .controls.big {
+            width: 30px;
+            height: 30px;
+        }
+        #left .controls.small {
+            width: 20px;
+            height: 20px;
+        }
+        #right {
+            background-color: var(--f-auplayer-color);
+            width: 120px;
+        }
+        #right #options .options {
+            padding: 12px 0px 10px 5px;
+            margin-left: 10px;
+        }
+        #time,
+        #icon,
+        .controls {
+            color: #fff;
+        }
+        #time,
+        #duration,
+        #title {
+            text-align: center;
+            line-height: 50px;
+        }
+        #loading {
+            text-align: center;
+            padding-top: 10px;
+            z-index: 3;
+        }
+        #time,
+        #duration {
+            font-size: 11px;
+        }
+        #duration {
+            color: #ffffff
+        }
+        #icon,
+        #play,
+        #options {
+            margin: auto;
+        }
+        #options {
+            color: #ffffff;
+            z-index: 4;
+        }
+        #icon,
+        #options {
+            opacity: 0;
+        }
+        #controls {
+            text-align: center;
+        }
+        #title {
+            pointer-events: none;
+            z-index: 2;
+            font-size: 15px;
+            color: #ffffff
+        }
+        #title a.avatar {
+            margin: 0px 5px 5px 5px;
+            width: 35px;
+            height: 35px;
+            display: inline-block;
+            position: relative;
+            vertical-align:middle;
+            top: 0;
+        }
+        #title a.avatar .img {
+            background-size: cover;
+            background-position: center;
+            width: 35px;
+            height: 35px;
+        }
+
+        paper-progress {
+            position: relative;
+            width: 100%;
+            --paper-progress-active-color: var(--f-auplayer-color);
+            --paper-progress-container-color: rgba(66, 66, 66, 1);
+            --paper-progress-height: 50px;
+        }
+
+        /* On hover */
+        #left:hover #icon,
+        :host:not(.cantplay) #right:hover #options {
+            opacity: 1;
+        }
+        #right:hover #duration {
+            opacity: 0;
+        }
+        :host:not(.cantplay) #center:hover #title{
+            color: #ffffff;
+        }
+
+        #left .controls:hover, #right .options {
+            transform: scale3d(1.1, 1.1, 1.1);
+            -ms-transform: scale3d(1.1, 1.1, 1.1);
+            -webkit-transform: scale3d(1.1, 1.1, 1.1);
+        }
+
+        /* On Error */
+        :host(.cantplay) #title {
+            font-size: 12px;
+        }
+        :host(.cantplay) #wrapper {
+            cursor: default;
+        }
+        :host(.cantplay) #play {
+            opacity: 0;
+        }
+        :host(.cantplay) #icon {
+            opacity: 1;
+        }
+
+        /* Flexbox Helpers */
+        .layout-horizontal {
+            display: flex;
+            display: -webkit-flex;
+            display: -ms-flexbox;
+            -ms-flex-direction: row;
+            -webkit-flex-direction: row;
+            flex-direction: row;
+        }
+        .flex {
+            -ms-flex: 1;
+            -webkit-flex: 1;
+            flex: 1;
+        }
+        .self-start {
+            -ms-align-self: flex-start;
+            -webkit-align-self: flex-start;
+            align-self: flex-start;
+        }
+        .self-end {
+            -ms-align-self: flex-end;
+            -webkit-align-self: flex-end;
+            align-self: flex-end;
+        }
+        paper-spinner {
+            --paper-spinner-layer-1-color : #fff;
+            --paper-spinner-layer-2-color : #fff;
+            --paper-spinner-layer-3-color : #fff;
+            --paper-spinner-layer-4-color : #fff;
+        }
+    </style>
+
+    <div id="wrapper" class="layout-horizontal">
+
+      <div id="left" class="self-start" on-mouseover="showControls" on-mouseout="hideControls">
+
+        <!-- Icon -->
+        <div id="controls" hidden$="{{ !visibleControls }}">
+            <iron-icon id="prev" class="controls big" hidden$="{{loading}}" icon="av:skip-previous"></iron-icon>
+            <iron-icon id="play" class="controls big" hidden$="{{loading}}" on-click="playPause"></iron-icon>
+            <iron-icon id="next" class="controls big" hidden$="{{loading}}" icon="av:skip-next"></iron-icon>
+        </div>
+        <!-- Current time -->
+        <div id="time" class="fit" hidden$="{{ visibleControls }}">
+          <span class="fit">{{ _convertSecToMin(currentTime) }}</span>
+        </div>
+      </div>
+
+      <div id="center" class="flex">
+        <!-- Title -->
+        <div id="loading" class="fit" hidden="{{!loading}}">
+            <paper-spinner id="spinner" class="" active="{{loading}}"></paper-spinner>
+        </div>
+
+        <div id="title" class="fit" hidden="{{loading}}">
+            <a class="avatar" href="">
+                <div class="img" id="songvatar"></div>
+            </a>
+            <span>{{ title }}</span>
+        </div>
+
+        <!-- Audio HTML5 element -->
+        <audio id="audio" src="{{ song }}"></audio>
+
+        <!-- Paper progress bar -->
+        <paper-progress id="progress"
+                        step=0.001
+                        value="[[ currentTime ]]"
+                        max="[[ duration ]]"
+                        min=0
+                        on-down="_onDown"></paper-progress>
+      </div>
+
+      <div id="right" class="self-end">
+
+        <div id="options" class="fit">
+            <iron-icon id="volume" class="options" icon="av:volume-up" on-click="mute"></iron-icon>
+            <iron-icon id="replay" class="options" icon="av:replay" on-click="restart"></iron-icon>
+        </div>
+        <!-- Duration -->
+        <div id="duration" class="fit" hidden$="{{ ended }}">
+          <span class="fit">{{ _convertSecToMin(duration) }}</span>
+        </div>
+
+        <!-- Icon -->
+      </div>
+    </div>
+
+  </template>
+
+  <script>
+    Polymer({
+        is: 'f-auplayer',
+        // Define public properties
+        properties: {
+            src: {
+              type: String,
+              notify: true,
+              observer: '_srcChanged'
+            },
+            title: {
+              type: String,
+              value: 'Click to play this audio file'
+            },
+            thumb: {
+              type: String,
+              notify: true,
+              value: ''
+            },
+            color: {
+              type: String,
+              observer: '_changeColor'
+            },
+            autoPlay: {
+              type: Boolean,
+              value: false
+            },
+            currentTime: {
+              type: Number,
+              value: 0,
+              notify: true
+            },
+            duration: {
+              type: Number,
+              value: 0
+            },
+            loading: {
+                type: Boolean,
+                notify: true,
+                value: false
+            }
+          },
+        // Register event listeners
+        listeners: {
+            'audio.loadedmetadata'  : '_onCanPlay',
+            'audio.playing'         : '_onPlaying',
+            'audio.pause'           : '_onPause',
+            'audio.ended'           : '_onEnd',
+            'audio.error'           : '_onError'
+        },
+        // When element is created
+        ready: function() {
+            // create Player defaults
+            this.canBePlayed = false;
+            this.isPlaying = false;
+            this.ended = false;
+            this.icon = '';
+            this.visibleControls = true;
+        },
+        // Play/Pause controls
+        playPause: function(e){
+            e.preventDefault();
+
+            if ( this.canBePlayed ) {
+                if (this.isPlaying) {
+                    this.$.audio.pause();
+                    this.$.play.setAttribute('icon', 'av:play-circle-outline');
+                    this.icon = 'av:play-circle-outline';
+                }
+                else {
+                    this.$.audio.play();
+                    this.$.play.setAttribute('icon', 'av:pause-circle-outline');
+                    this.icon = 'av:pause-circle-outline';
+                }
+
+                this.isPlaying = !this.isPlaying;
+            }
+        },
+        restart: function(e){
+            e.preventDefault();
+            this.$.audio.currentTime = 0;
+
+            if ( !this.isPlaying ) {
+                this.$.audio.play();
+            }
+        },
+        _onCanPlay: function() {
+            this.loading = false;
+            this.canBePlayed = true;
+            this.duration = this.$.audio.duration;
+
+            if (!this.isPlaying) {
+                this.$.play.setAttribute('icon', 'av:play-circle-outline');
+                this.icon = 'av:play-circle-outline';
+                this.classList.remove('cantplay');
+            }
+
+            if (this.autoPlay) {
+                this.$.audio.play();
+            }
+        },
+        _onPlaying: function() {
+            this.ended = false;
+            this.isPlaying = true;
+
+            this._startProgressTimer();
+        },
+        _startProgressTimer: function() {
+            this.timer = {};
+
+            if (this.timer.sliderUpdateInterval) { clearInterval(this.timer.sliderUpdateInterval); }
+
+            this.timer.sliderUpdateInterval = setInterval( function() {
+                if ( this.isPlaying ) {
+                    this.currentTime = this.$.audio.currentTime;
+                } else {
+                    clearInterval(this.timer.sliderUpdateInterval);
+                }
+            }.bind(this), 120);
+        },
+        _onPause: function() {
+            this.isPlaying = false;
+            this.icon = 'av:pause-circle-outline';
+            this.$.play.setAttribute('icon', 'av:play-circle-outline');
+        },
+        _onEnd: function() {
+            this.ended = true;
+            this.isPlaying = false;
+            this.currentTime = 0;
+        },
+        _onError: function() {
+            this.loading = false;
+            this.classList.add('cantplay');
+            this.title = 'Sorry, can\'t play track: ' + this.title;
+            this.icon = 'av:not-interested';
+        },
+        _convertSecToMin: function(seconds){
+            if (seconds === 0) {
+              return '';
+            }
+            var minutes = Math.floor(seconds / 60);
+            var secondsToCalc = Math.floor(seconds % 60) + '';
+            return minutes + ':' + (secondsToCalc.length < 2 ? '0' + secondsToCalc : secondsToCalc);
+        },
+        _onDown: function(e) {
+            e.preventDefault();
+            var x, r;
+            x = e.detail.x - this.offsetLeft - this.$.left.offsetWidth;
+            r = (x / this.$.progress.offsetWidth) * this.duration;
+            this.currentTime = this.$.audio.currentTime = r;
+        },
+        _srcChanged: function() {
+            this.song = window.Polymer.config.cloudfront + 'tracks/' + this.src;
+            this.loading = true;
+
+            this.$.songvatar.style['background-image'] = 'url(' + this.thumb + ')';
+
+            if (this.isPlaying) {
+                this.$.audio.pause();
+                this.$.audio.play();
+            }
+        },
+        _changeColor: function(newValue) {
+            this.querySelector('paper-progress #primaryProgress.paper-progress').style.backgroundColor = newValue;
+            this.$.left.style.backgroundColor = newValue;
+            this.$.title.style.color = newValue;
+            this.$.duration.style.color = newValue;
+            this.$.replay.style.color = newValue;
+        },
+        mute: function () {
+            this.$.volume.setAttribute('icon', this.$.audio.muted && 'av:volume-up' || 'av:volume-mute');
+            this.$.audio.muted = !this.$.audio.muted;
+        },
+
+        /* doom events */
+        showControls: function () {
+            this.visibleControls = true;
+        },
+        hideControls: function () {
+            this.visibleControls = this.isPlaying ? false: true;
+        }
+    });
+  </script>
+
+</dom-module>

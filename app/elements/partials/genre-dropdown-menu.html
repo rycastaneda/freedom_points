@@ -1,0 +1,55 @@
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+
+<dom-module id="genre-dropdown-menu">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            paper-dropdown-menu.genre-dropdown {
+                position: relative;
+                padding: 7px 0;
+            }
+        </style>
+        <iron-ajax
+            id="genres"
+            auto
+            url=""
+            params='{"page":"1", "entries":"50"}'
+            handle-as="json"
+            last-response="{{allGenres}}"
+            debounce-duration="300"></iron-ajax>
+        <paper-dropdown-menu label="GENRES" no-label-float class="genre-dropdown" on-iron-select="filterTracksByGenre" valueattr="label">
+            <paper-menu class="dropdown-content" attr-for-selected="value">
+                <template is="dom-repeat" items="{{allGenres.data.results}}" as="genre">
+                    <paper-item value="{{genre.genre_id}}">{{genre.name}}</paper-item>
+                </template>
+            </paper-menu>
+        </paper-dropdown-menu>
+    </template>
+    <script>
+    (function() {
+        'use strict';
+
+        Polymer({
+            is: 'genre-dropdown-menu',
+            properties: {
+                genreId: {
+                    type: String,
+                    notify: true
+                }
+            },
+            ready: function () {
+                this.$.genres.url = window.Polymer.config.backend_url + '/category/genre/all';
+            },
+            filterTracksByGenre: function (e) {
+                var selectedItem = e.target.selectedItem;
+
+                if (selectedItem) {
+                    this.genreId = selectedItem.value;
+                }
+            }
+        });
+    })();
+    </script>
+</dom-module>

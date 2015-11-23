@@ -1,0 +1,43 @@
+<dom-module id="artist-item">
+    <template>
+        <style>
+            :host {
+                min-width: 15vw;
+                width: calc(50% - 100px);
+                min-width: 265px;
+                --paper-card: {
+                    width: 23%;
+                    margin: 5px;
+                };
+                --paper-card-content: {
+                    text-align: left;
+                };
+                --paper-card-actions: {
+                    text-align: right;
+                    padding: 0;
+                };
+            }
+
+            .title {
+                @apply(--title);
+            }
+            .rating {
+                @apply(--rating);
+            }
+        </style>
+        <paper-card image="{{artist.picture}}" on-tap="goToArtist" data-args="{{artist.artist_id}}">
+            <div class="card-content">
+                <paper-button class="rating" raised>{{artist.rating}}</paper-button>
+                <span class="title">{{artist.name}}</span>
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        Polymer({
+            is: 'artist-item',
+            goToArtist: function () {
+                page('/artist/' + this.artist.artist_id);
+            }
+        });
+    </script>
+</dom-module>

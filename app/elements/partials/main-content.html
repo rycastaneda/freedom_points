@@ -1,0 +1,74 @@
+<dom-module id="music-dashboard">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+            <paper-scroll-header-panel main fixed id="scrollheader">
+                <user-data>
+                </user-data>
+                <div class="content">
+                    <div>{{song}}</div>sdaf
+                    <neon-animated-pages id="pages"
+                        class="flex" selected="{{route}}"
+                        attr-for-selected="data-menu"
+                        entry-animation="slide-from-right-animation"
+                        exit-animation="slide-left-animation">
+
+                        <neon-animatable data-menu="home">
+
+                            <paper-tabs selected="{{selected}}">
+                                <genre-dropdown-menu genre-id="{{genreId}}"></genre-dropdown-menu>
+                                <template is="dom-repeat" items="[[tabs]]" as="tab">
+                                    <paper-tab name="[[tab]]">[[tab]]</paper-tab>
+                                </template>
+                            </paper-tabs>
+
+                            <item-cards selected="{{selected}}" genre-id="{{genreId}}" song="{{song}}"></item-cards>
+                        </neon-animatable>
+
+                        <neon-animatable data-menu="record-label-page">
+                            <record-label-page></record-label-page>
+                        </neon-animatable>
+
+                        <neon-animatable data-menu="artist-page">
+                            <artist-page></artist-page>
+                        </neon-animatable>
+
+                        <neon-animatable data-menu="album-page">
+                            <album-page></album-page>
+                        </neon-animatable>
+
+                    </neon-animated-pages>
+                </div>
+                <f-auplayer src="{{song}}" title="Photograph"></f-auplayer>
+            </paper-scroll-header-panel>
+    </template>
+    <script>
+        Polymer({
+            is: 'music-dashboard',
+            properties: {
+                selected: 1,
+                tabs: [
+                    'SPOTLIGHT',
+                    'TRACKS',
+                    'ARTISTS',
+                    'ALBUMS'
+                ]
+            },
+            ready: function () {
+                this.$.scrollheader.scroller.addEventListener('scroll', function () {
+                    this.fire('iron-signal', {
+                        name: 'scrolled',
+                        data: {
+                            tab: document.getElementById('pageContainer').selected,
+                            container: this
+                        }
+                    });
+                });
+                console.log('window.Polymer.config', window.Polymer.config);
+            }
+        });
+    </script>
+</dom-module>

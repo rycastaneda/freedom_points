@@ -1,0 +1,139 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="record-label-page">
+    <template>
+        <style>
+            :host {
+            }
+            .banner-container {
+                @apply(--layout-horizontal);
+                @apply(--layout-center);
+                background: url('/images/banner.png');
+                height: 300px;
+            }
+            .banner-content {
+                position: relative;
+                top: -20px;
+            }
+            .cover,
+            .banner-text {
+                display: inline-block;
+                vertical-align: middle;
+            }
+            .cover {
+                width: 150px;
+                height: 150px;
+                padding: 0 20px 0 70px;
+            }
+            .cover img {
+                @apply(--shadow-elevation-8dp);
+                width: 100%;
+                height: 100%;
+                border-radius: 100%;
+            }
+            h3, h4 {
+                color: var(--white-text-color);
+            }
+            .subtitle {
+                font-weight: 400;
+            }
+            .tbl-contents {
+                background: #fff;
+                top: -58px;
+                width: 80%;
+                margin: auto;
+            }
+        </style>
+        <section data-route="record-label-page">
+
+
+            <iron-ajax
+                id="labelinfo"
+                auto
+                handle-as="json"
+                on-response="labelInfoHandler"
+                debounce-duration="300"></iron-ajax>
+
+            <div class="banner-container">
+                <div class="banner-content">
+                    <div class="cover">
+                        <img src="{{labelInfo.logo}}" />
+                    </div>
+                    <div class="banner-text">
+                        <h3 class="title">{{labelInfo.name}}</h3>
+                        <h4 class="subtitle">{{labelInfo.label}}</h4>
+                    </div>
+                </div>
+            </div>
+            <paper-material elevation="1" class="tbl-contents">
+
+                <iron-ajax
+                    id="labeltracks"
+                    auto
+                    handle-as="json"
+                    on-response="labelTracksHandler"
+                    debounce-duration="300"></iron-ajax>
+
+                <element-table elements="{{labelTracks}}"></element-table>
+
+            </paper-material>
+        </section>
+    </template>
+
+    <script>
+        (function () {
+            'use strict';
+
+            Polymer({
+                is: 'record-label-page',
+                properties: {
+                    label_id: String
+                },
+                ready: function () {
+                    var app = document.querySelector('#app'),
+                        self = this;
+
+                    this.tbl_headers = [
+                        '',
+                        'Song',
+                        'Genre',
+                        'Length',
+                        ''
+                    ];
+
+                    page('/record-label/:id', function(data) {
+                        app.route = 'record-label-page';
+                        app.params = data.params;
+                        self.label_id = data.params.id;
+                        self.$.labelinfo.url = window.Polymer.config.backend_url + '/music-provider/' + self.label_id;
+                        self.$.labeltracks.url = window.Polymer.config.backend_url + '/music-provider/' + self.label_id + '/tracks';
+                    });
+                },
+                labelTracksHandler: function (data) {
+                    this.labelTracks = data.detail.response.data.results;
+
+                    _.map(this.labelTracks, function (item) {
+                        item.title = item.title ? item.title : 'Untitled';
+                        item.label = item.label ? item.label : 'No Artist';
+                        item.genre = item.genre.length ? item.genre.join(', ') : 'Uncategorized';
+                    });
+                },
+                labelInfoHandler: function (data) {
+                    this.labelInfo = data.detail.response.data;
+                }
+            });
+        })();
+    </script>
+
+</dom-module>

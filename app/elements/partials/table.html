@@ -1,0 +1,162 @@
+<link rel="import" href="../../bower_components/paper-styles/paper-styles.html">
+
+
+<dom-module id="element-table">
+  <template>
+        <style>
+            :host {
+                display: block;
+                position: relative;
+                background: white;
+                border: 1px solid #e5e5e5;
+                border-radius: 3px;
+            }
+            .header {
+                padding: 0 24px;
+                line-height: 56px;
+                font-size: 12px;
+                font-weight: 500;
+                border-bottom: 1px solid #e5e5e5;
+            }
+            :host([narrow-viewport]) .header .description {
+                display: none;
+            }
+            :host(:not([narrow-viewport])) .header,
+            :host(:not([narrow-viewport])) .row,
+            :host(:not([narrow-viewport])) .row a {
+                @apply(--layout-horizontal);
+            }
+            :host([narrow-viewport]) .header,
+            :host([narrow-viewport]) .row,
+            :host([narrow-viewport]) .row a {
+                @apply(--layout-vertical);
+            }
+            .row {
+                border-bottom: 1px solid #e5e5e5;
+            }
+            .row a {
+                box-sizing: border-box;
+                cursor: pointer;
+                overflow: hidden;
+                width: 100%;
+                padding: 15px 24px;
+                font-weight: 400;
+                font-size: 13px;
+                text-decoration: none;
+                color: var(--primary-text-color);
+            }
+            .row.hover {
+                background: #fafafa;
+            }
+            :host(:not([narrow-viewport])) .row.hover .description {
+                padding-right: 120px;
+            }
+            .data {
+                padding: 0 15px;
+                text-align: right;
+                align-self: center;
+            }
+            .data:not(.buttons) {
+                min-width: 132px;
+                text-align: left;
+            }
+            .data.title {
+                min-width: 270px;
+                text-align: left;
+            }
+            .data.description {
+                @apply(--layout-horizontal);
+            }
+            .data.buttons {
+                width: 55px;
+                @apply(--layout-horizontal);
+                @apply(--layout-end-justified);
+            }
+            .data.buttons iron-icon {
+                padding: 0 2px;
+            }
+            .title .narrow {
+                display: none;
+            }
+            :host([narrow-viewport])  .title .narrow {
+                display: inline;
+            }
+            .row .description {
+                color: #757575;
+            }
+            :host(:not([narrow-viewport])) .row .description {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        </style>
+
+        <iron-media-query query="(max-width: 640px)" query-matches="{{narrowViewport}}"></iron-media-query>
+
+        <div class="header" style$="[[_getHeaderStyle(color)]]">
+            <div class="data buttons"></div>
+            <div class="data title">Song <span class="narrow">/ Description</span></div>
+            <div class="data description">Genre</div>
+            <div class="data description">Length</div>
+            <div class="data buttons"></div>
+        </div>
+        <template is="dom-repeat" items="[[elements]]">
+            <div class="row" data-index$="[[index]]">
+                <a href$="[[_elementLink(item.title)]]">
+                    <div class="data buttons">
+                        <iron-icon icon="av:playlist-add"></iron-icon>
+                        <iron-icon icon="av:play-circle-outline"></iron-icon>
+                    </div>
+                    <div class="data title">[[item.title]]</div>
+                    <div class="data description">[[item.genre]]</div>
+                    <div class="data description">[[item.length]]</div>
+                    <div class="data buttons">
+                        <iron-icon icon="icons:info-outline"></iron-icon>
+                    </div>
+                </a>
+            </div>
+        </template>
+    </template>
+</dom-module>
+<script>
+    Polymer({
+        is: 'element-table',
+        properties: {
+            elements: Array,
+            color: String,
+            narrowViewport: {type: Boolean, reflectToAttribute: true}
+        },
+        listeners: {
+            'tap': '_tap'
+        },
+        _currentRowIndex: -1,
+        _sharedActionMenu: null,
+        _findAncestor: function (node, fn) {
+            while (node && fn.call(this, node)) {
+                node = node.parentNode;
+            }
+            return node;
+        },
+        _tap: function (e) {
+            var sourceEvent = e.detail.sourceEvent;
+            var A = this._findAncestor(e.target, function (node) {
+                return node !== this && node.tagName !== 'A';
+            });
+            if (A && A.tagName === 'A' && A.href.indexOf(location.host) > 0) {
+                if (sourceEvent.ctrlKey || sourceEvent.metaKey) {
+                    window.open(A.href);
+                }
+                else {
+                    this.fire('nav', {url: A.href});
+                }
+                e.preventDefault();
+            }
+        },
+        _elementLink: function (name) {
+            return '/elements/' + name;
+        },
+        _getHeaderStyle: function (color) {
+            return 'background-color: '+ color+';';
+        }
+  });
+</script>

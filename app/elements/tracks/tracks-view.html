@@ -1,0 +1,97 @@
+<dom-module id="tracks-view">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 90%;
+                margin: auto;
+                text-align: justify;
+            }
+            .title {
+                @apply(--title);
+            }
+            .rating {
+                @apply(--rating);
+            }
+
+/*
+            paper-card {
+                @apply(--music-paper-cards);
+                --paper-card {
+                    @apply(--music-paper-card);
+                }
+                --paper-card-content {
+                    @apply(--music-paper-card-content);
+                }
+                --paper-card-actions {
+                    @apply(--music-paper-card-actions);
+                }
+            }*/
+
+        </style>
+            <iron-ajax auto
+                id="tracks"
+                handle-as="json"
+                url=""
+                last-response="{{allTracks}}"
+                on-response="allTracksHandler"
+                debounce-duration="300"></iron-ajax>
+        <iron-signals on-iron-signal-loggedin="loggedInEvent"></iron-signals>
+        <iron-signals on-iron-signal-scrolled="handleScroll"></iron-signals>
+        <template is="dom-repeat" items="{{trackResults}}">
+            <tracks-item track="{{item}}"></tracks-item>
+        </template>
+    </template>
+    <script>
+        Polymer({
+            is: 'tracks-view',
+            properties: {
+                page: {
+                    type: Number,
+                    value: 1
+                },
+                trackResults: {
+                    type: Array,
+                    value: []
+                },
+                genreId : {
+                    observer: 'genreChanged'
+                },
+                tab: {
+                    observer: 'tabChanged'
+                }
+            },
+            listeners: {
+                'scrolled': 'handleScroll'
+            },
+            ready: function () {
+            },
+            loggedInEvent: function (e) {
+                this.auth = e.detail;
+            },
+            handleScroll: function (e) {
+                if ((e.detail.container.scrollTop + e.detail.container.offsetHeight >= e.detail.container.scrollHeight) && e.detail.tab === 1) {
+                    this.page++;
+                    this.$.tracks.params = {'page': this.page, 'entries':'20', 'include_private':'0'};
+                }
+            },
+            genreChanged: function (g) {
+                this.trackResults = [];
+                this.$.tracks.params = {};
+                this.$.tracks.url = window.Polymer.config.backend_url + '/category/genre/' + g + '/tracks';
+            },
+            tabChanged: function () {
+                this.$.tracks.url = window.Polymer.config.backend_url + '/track/all';
+            },
+            allTracksHandler: function () {
+                _.map(this.allTracks.data.results, function (item) {
+                    this.push('trackResults', item);
+                    item.title = item.title ? item.title : 'Untitled';
+                    item.artist = item.artist ? item.artist : 'No Artist';
+                    item.rating = item.rating ? item.rating : 0;
+                    item.album_cover = item.album_cover ? item.album_cover : '/images/cover-art.png';
+                }.bind(this));
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,63 @@
+<dom-module id="record-label-view">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 90%;
+                margin: auto;
+                text-align: justify;
+            }
+            .title {
+                @apply(--title);
+            }
+        </style>
+        <iron-ajax auto
+            id="labels"
+            url=""
+            handle-as="json"
+            last-response="{{allLabels}}"
+            on-response="allLabelsHandler"
+            debounce-duration="300"></iron-ajax>
+        <iron-signals on-iron-signal-scrolled="handleScroll"></iron-signals>
+        <template is="dom-repeat" items="{{labelResults}}" as="label">
+            <record-label-item label="{{label}}"></record-label-item>
+        </template>
+    </template>
+    <script>
+        Polymer({
+            is: 'record-label-view',
+            properties: {
+                page: {
+                    type: Number,
+                    value: 1
+                },
+                labelResults: {
+                    type: Array,
+                    value: []
+                },
+                tab: {
+                    observer: 'tabChanged'
+                }
+            },
+            listeners: {
+                'scrolled': 'handleScroll'
+            },
+            ready: function () {},
+            handleScroll: function (e) {
+                if ((e.detail.container.scrollTop + e.detail.container.offsetHeight >= e.detail.container.scrollHeight) && e.detail.tab === 0) {
+                    this.page++;
+                    this.$.labels.params = {'page': this.page, 'entries':'20', 'include_private':'0'};
+                }
+            },
+            tabChanged: function () {
+                this.$.labels.url = window.Polymer.config.backend_url + '/music-provider/all';
+            },
+            allLabelsHandler: function () {
+                _.map(this.allLabels.data.results, function (item) {
+                    this.push('labelResults', item);
+                    item.logo = item.logo ? item.logo : '/images/cover-art.png';
+                }.bind(this));
+            },
+        });
+    </script>
+</dom-module>

@@ -15,6 +15,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // Learn more about auto-binding templates at http://goo.gl/Dx1u2g
   var app = document.querySelector('#app');
 
+  document.addEventListener('WebComponentsReady', function () {
+      app.$.scrollheader.scroller.addEventListener('scroll', function () {
+          app.fire('iron-signal', {
+              name: 'scrolled',
+              data: {
+                  tab: document.getElementById('pageContainer').selected,
+                  container: this
+              }
+          });
+      });
+  });
+
+  app.selected = 1;
+
+  app.tabs = [
+      'SPOTLIGHT',
+      'TRACKS',
+      'ARTISTS',
+      'ALBUMS'
+  ];
+
+  app.songChanged = function (e) {
+      app.track = e.detail;
+  };
+
   app.displayInstalledToast = function() {
     // Check to make sure caching is actually enabled—it won't be in the dev environment.
     if (!document.querySelector('platinum-sw-cache').disabled) {
@@ -68,7 +93,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   // Scroll page to top and expand header
   app.scrollPageToTop = function() {
-    document.getElementById('mainContainer').scrollTop = 0;
+    app.scrollTop = 0;
+  };
+
+  app.clickHandler = function (e) {
+    var button = e.target,
+        id = button.getAttribute('data-dialog'),
+        dialog = document.getElementById(id);
+
+    while (!button.hasAttribute('data-dialog') && button !== document.body) {
+        button = button.parentElement;
+    }
+
+    if (!button.hasAttribute('data-dialog')) {
+        return;
+    }
+    if (dialog) {
+        dialog.open();
+    }
   };
 
 })(document);

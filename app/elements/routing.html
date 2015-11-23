@@ -9,9 +9,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <script src="../bower_components/page/page.js"></script>
+<script src="../bower_components/querystring/querystring.min.js"></script>
+<script src="../bower_components/cookies-js/dist/cookies.min.js"></script>
+<script src="../bower_components/lodash/lodash.min.js"></script>
 <script>
   window.addEventListener('WebComponentsReady', function() {
-
+    var app = document.querySelector('#app');
     // We use Page.js for routing. This is a Micro
     // client-side router inspired by the Express router
     // More info: https://visionmedia.github.io/page.js/
@@ -21,28 +24,44 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       app.scrollPageToTop();
       next();
     }
-
     // Routes
     page('/', scrollToTop, function() {
       app.route = 'home';
+      console.log('app.route', app.route);
     });
 
     page('/users', scrollToTop, function() {
       app.route = 'users';
     });
 
-    page('/users/:name', scrollToTop, function(data) {
-      app.route = 'user-info';
-      app.params = data.params;
-    });
-
     page('/contact', scrollToTop, function() {
       app.route = 'contact';
     });
 
+    page('/album/:id', scrollToTop, function(data) {
+      app.route = 'album-page';
+      app.params = data.params;
+      // console.log("route album",  app.params);
+    });
+
+    page('/artist/:id', scrollToTop, function(data) {
+      app.route = 'artist-page';
+      app.params = data.params;
+    });
+
+    page('/record-label/:id', scrollToTop, function(data) {
+      app.route = 'record-label-page';
+      app.params = data.params;
+      // console.log("route album",  app.params);
+    });
+
+    page('/album', scrollToTop, function() {
+      app.route = 'album-page';
+    });
+
     // add #! before urls
     page({
-      hashbang: true
+      hashbang: false
     });
 
   });

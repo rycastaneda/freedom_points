@@ -1,0 +1,38 @@
+<dom-module id="track-actions">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            .card-actions paper-button {
+                @apply(--actions-button);
+            }
+        </style>
+        <div class="card-actions">
+            <paper-button>
+                <iron-icon class="add-to-playlist" icon="av:playlist-add"></iron-icon>
+            </paper-button>
+            <paper-button>
+                <iron-icon class="tags" icon="icons:add-box"></iron-icon>
+            </paper-button>
+            <paper-button>
+                <iron-icon class="download" icon="icons:file-download"></iron-icon>
+            </paper-button>
+            <paper-button>
+                <iron-icon class="play" icon="av:play-circle-outline" on-tap="play"></iron-icon>
+            </paper-button>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'track-actions',
+            play: function () {
+                this.fire('song-changed', this.track);
+                // console.log("this.song play", this.src);
+                // this.src = this.track.filename;
+            },
+            ready: function () {
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,47 @@
+<dom-module id="tracks-item">
+    <template>
+        <style>
+            :host {
+                min-width: 15vw;
+                width: calc(50% - 100px);
+                min-width: 265px;
+                --paper-card: {
+                    width: 23%;
+                    margin: 5px;
+                };
+                --paper-card-content: {
+                    text-align: left;
+                };
+                --paper-card-actions: {
+                    text-align: right;
+                    padding: 0;
+                };
+            }
+            .rating {
+                @apply(--rating);
+            }
+            .title {
+                @apply(--title);
+            }
+            .subtitle {
+                @apply(--subtitle);
+            }
+        </style>
+        <paper-card image="{{track.album_cover}}" id="{{track.track_id}}">
+            <div class="card-content">
+                <div>{{foo}}</div>
+
+                <paper-button class="rating" raised>{{track.rating}}</paper-button>
+                <span class="title">{{track.title}}</span>
+                <span class="subtitle">{{track.artist}}</span>
+            </div>
+            <track-actions track="{{track}}"></track-actions>
+        </paper-card>
+    </template>
+    <script>
+        Polymer({
+            is: 'tracks-item',
+            ready: function () {}
+        });
+    </script>
+</dom-module>

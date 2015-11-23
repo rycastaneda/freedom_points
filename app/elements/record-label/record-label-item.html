@@ -1,0 +1,39 @@
+<dom-module id="record-label-item">
+    <template>
+        <style>
+            :host {
+                min-width: 15vw;
+                width: calc(50% - 100px);
+                min-width: 265px;
+                --paper-card: {
+                    width: 23%;
+                    margin: 5px;
+                };
+                --paper-card-content: {
+                    text-align: left;
+                };
+                --paper-card-actions: {
+                    text-align: right;
+                    padding: 0;
+                };
+            }
+
+            .title {
+                @apply(--title);
+            }
+        </style>
+        <paper-card image="{{label.logo}}" on-tap="goToRecordLabel" data-args="{{label.id}}">
+            <div class="card-content">
+                <span class="title">{{label.name}}</span>
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        Polymer({
+            is: 'record-label-item',
+            goToRecordLabel: function () {
+                page('/record-label/' + this.label.id);
+            }
+        });
+    </script>
+</dom-module>

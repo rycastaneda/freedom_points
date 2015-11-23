@@ -1,0 +1,46 @@
+<dom-module id="login-button">
+    <template>
+        <style>
+            /*:host {*/
+                /*display: block;*/
+            /*}*/
+        </style>
+        <paper-menu-button horizontal-align="right" vertical-offset="50">
+            <span>asdsad</span>
+          <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
+          <paper-menu class="dropdown-content" selected="{{selectedIndex}}">
+                <paper-item hidden$="{{logged_in}}">Log In</paper-item>
+                <paper-item hidden$="{{!logged_in}}">Sign Out</paper-item>
+          </paper-menu>
+        </paper-menu-button>
+        <iron-signals on-iron-signal-loggedin="loggedInEvent"></iron-signals>
+    </template>
+    <script>
+        Polymer({
+            is: 'login-button',
+            properties: {
+                logged_in: {
+                    type: Boolean,
+                    notify: true,
+                    value: false
+                },
+                selectedIndex: {
+                    type: Number,
+                    value: -1,
+                    observer: '_selectedIndexChanged'
+                }
+            },
+            loggedInEvent: function () {
+                this.logged_in = true;
+            },
+            _selectedIndexChanged: function (e) {
+                if (e === 0) {
+                    this.fire('login-event', {});
+                } else if (e === 1) {
+                    this.logged_in = false;
+                    this.fire('logout-event', {});
+                }
+            }
+        });
+    </script>
+</dom-module>

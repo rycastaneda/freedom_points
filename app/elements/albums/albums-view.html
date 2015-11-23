@@ -1,0 +1,64 @@
+<dom-module id="albums-view">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 90%;
+                margin: auto;
+                text-align: justify;
+            }
+            /*album-item ::content paper-card {
+                @apply(--music-paper-cards);
+            }*/
+        </style>
+            <iron-ajax auto
+                id="albums"
+                params='{"page":"1", "entries":"20"}'
+                handle-as="json"
+                last-response="{{allAlbums}}"
+                on-response="allAlbumsHandler"
+                debounce-duration="300"></iron-ajax>
+            <iron-signals on-iron-signal-scrolled="handleScroll"></iron-signals>
+            <template is="dom-repeat" items="{{albumResults}}" as="album">
+                <album-item album="{{album}}"></album-item>
+            </template>
+    </template>
+    <script>
+        Polymer({
+            is: 'albums-view',
+            properties: {
+                page: {
+                    type: Number,
+                    value: 1
+                },
+                albumResults: {
+                    type: Array,
+                    value: []
+                }
+            },
+            ready: function () {
+                this.$.albums.url = window.Polymer.config.backend_url + '/album/all';
+            },
+            handleScroll: function (e) {
+                if ((e.detail.container.scrollTop + e.detail.container.offsetHeight >= e.detail.container.scrollHeight) && e.detail.tab === 3) {
+                    this.page++;
+                    this.$.albums.params = {'page': this.page, 'entries':'20', 'include_private':'0'};
+                }
+            },
+            tabChanged: function () {
+                this.$.albums.url = window.Polymer.config.backend_url + '/album/all';
+            },
+            allAlbumsHandler: function () {
+                var self = this;
+
+                _.map(this.allAlbums.data.results, function (item) {
+                    self.push('albumResults', item);
+                    item.artist = item.artist ? item.artist : 'No Artist';
+                    item.rating = item.rating ? item.rating : 0;
+
+                    item.cover = item.cover ? item.cover : '/images/cover-art.png';
+                });
+            }
+        });
+    </script>
+</dom-module>

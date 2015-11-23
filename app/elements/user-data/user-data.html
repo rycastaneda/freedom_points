@@ -1,0 +1,84 @@
+<dom-module id="user-data">
+<template>
+    <iron-localstorage name="auth"
+        value="{{auth}}"
+        id="storage"
+        on-iron-localstorage-load="load"
+      ></iron-localstorage>
+    <iron-request id="xhr_login"></iron-request>
+    <iron-request id="xhr_logout"></iron-request>
+    <span>{{this.auth.access_token}}</span>
+    <music-toolbar on-login-event="login" on-logout-event="logout"></music-toolbar>
+</template>
+    <script>
+        function serialize (obj) {
+            var str = [];
+            for (var prop in obj) {
+                if (obj.hasOwnProperty(prop) && obj[prop]) {
+                    str.push(encodeURIComponent(prop) + '=' + encodeURIComponent(obj[prop]));
+                }
+            }
+            return str.join('&');
+        }
+
+        Polymer({
+            is: 'user-data',
+            properties: {
+                auth: {
+                    type: Object,
+                    notify: true,
+                }
+            },
+            load: function () {
+                // signal the whole app of the current user
+                this.fire('iron-signal', {name: 'loggedin', data: this.auth});
+            },
+            ready: function () {
+                page('/login/callback', this.get_user.bind(this));
+            },
+            logout: function () {
+                this.$.xhr_logout.send({
+                    url: window.Polymer.config.backend_url + '/auth/logout',
+                    method: 'POST',
+                    headers: window.Polymer.getHeaders()
+                }).then(function () {
+                    // remove mida
+                    Cookies.expire('mida');
+                    this.auth = {};
+                    page('/');
+                }.bind(this));
+            },
+            login: function () {
+                // Go to accounts.freedom.tm
+                var params = {
+                        service: 'music_dashboard',
+                        roles: 'profile,email,partner',
+                        response_type: 'code',
+                        redirect_uri: window.Polymer.config.backend_url + '/auth/callback',
+                        state: 'admin'
+                    },
+                    url = 'http://api.accounts.freedom.tm/auth?' + serialize(params);
+
+                page(url);
+            },
+            get_user: function (data) {
+                // parse token and set cookie of mida
+                this.auth = querystring.parse(data.querystring);
+                Cookies.set('mida', this.auth.mida);
+
+                // Get current user
+                this.$.xhr_login.send({
+                    url: window.Polymer.config.backend_url + '/user/',
+                    method: 'GET',
+                    headers: window.Polymer.getHeaders()
+                }).then(function (data) {
+                    this.set('auth.user', JSON.parse(data.xhr.response));
+                    // fire signal to whole app
+                    this.fire('iron-signal', {name: 'loggedin', data: this.auth});
+                    page('/');
+                }.bind(this));
+            }
+
+        });
+    </script>
+</dom-module>
